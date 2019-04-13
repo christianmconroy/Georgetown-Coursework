@@ -1,0 +1,61 @@
+---
+title: "A02a_G22630214"
+author: "Christian Conroy"
+date: "February 2, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+
+Load in the household data:
+
+```{r, message = FALSE}
+household <- read_csv("households.csv")
+```
+
+A.a -
+Convert categorical variables to factors:
+
+```{r, results='hide'}
+str(household)
+household$Household <- as.factor(household$Household)
+household$Location <- as.factor(household$Location)
+household$Household <- as.factor(household$Ownership)
+```
+
+Categorical: Household, Location, Ownership
+Continuous: Family Size, First Income, Second Income, Monthly Payment, Utilities, Debt
+
+A.b -
+Nominal: Household, Location, Ownership
+
+A.c -
+Create a histogram for each of Debt: 
+
+```{r}
+hist(household$Debt)
+```
+
+A.d  - Find the maximum and minimum debt levels for the households in this sample.
+```{r}
+summary(household$Debt)
+```
+Minimum debt is $227 and maximum debt is $9104. 
+
+A.e - Report the indebtedness levels at each of the 25th, 50th, and 75th percentiles.
+```{r}
+quantile(household$Debt, c(.25, .50, .70))
+```
+
+A.f - Report and interpret the interquartile range for the indebtedness levels of households
+```{r}
+IQR(household$Debt)
+```
+
+The difference between the upper and lower quartiles (25% and 75%) for household indebtedness is $2727
