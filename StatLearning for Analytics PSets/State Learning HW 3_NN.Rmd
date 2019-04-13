@@ -1,0 +1,363 @@
+---
+title: "Statistical Learning HW 3 - Neural Networks"
+author: "Christian Conroy"
+date: "March 1, 2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+require(knitr)
+require(nnet)
+# install.packages('pROC', dependencies = TRUE)
+require(pROC)
+require(ggplot2)
+require(readxl)
+require(reshape2)
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics")
+```
+
+# Extra 28 (3 Points)
+Below is the output from nnet after we fit a model. Let's assume we used a tanh() activation function
+throughout. Let xi, i = 1, 2, . . . be the input variables and let h1, h2, . . . be the output from the hidden layer.
+
+![Alt text](/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics/NeurNet.jpg)
+
+(a) Draw a diagram of this neural network architecture. Label all the edges with the corresponding weights.
+
+![Alt text](/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics/28NeuralNetwork.jpg)
+
+(b) Provide an expression for the output value of the first hidden unit as a function of the values of the
+input features. This should have the form h1 = f(x1, x2, . . .) for a suitable explicit function f.
+
+h1 = f(1.2b + 4.2x1 -0.5x2)
+
+(c) Provide an expression for the value at the output node as a function of the values at the hidden units.
+This should have the form z = g(h1, h2, . . .) for a suitable explicit function g.
+
+z = g(5b - 8h1 + 1.5h2)
+
+(d) Provide an expression for the value at the output node as a function of the input values. This should
+have the form z = F(x1, x2, . . .) for a suitable explicit function F.
+
+z = F(5b -8(1.2b + 4.2x1 -0.5x2) + 1.5(-30b +20x1 - 40x2))
+
+# Extra 30 (3 points)
+
+Suppose two different ANNs have been trained on a training set for a classification problem, and the responses,
+scaled to have values in [0, 1], have been computed for all training instances for both networks. Assume that
+the responses for network 2 are related to those from network 1 by a monotone function, such as in the plot
+below. Explain carefully why the two ANNs have the same ROC curve.
+
+Given that we are training both networks on the same train set, the sensitivity (True Positive) and 1 - specificity (False Positive) axes that comprise the ROC curve at different decision thresholds (the probability threshold considered to assign the positive class) will be the same for both networks. If the responses are related by a monotone function abd the responses from the train set are scaled [0,1], then we are essentially dealing with an ANN with a logistic activiation function, or a logistic regression model.   
+
+# Extra 34 (3 points)
+
+Make a dataframe with k = 11 columns and N = 100 observations, where all entries are independent standard
+normal random sample. Let z be the last column. Use set.seed(20305).
+
+```{r message = FALSE}
+set.seed(20305)
+data <- data.frame(matrix(rnorm(100), nrow = 100, ncol = 11, byrow = TRUE))
+colnames(data)[11] <- "z"
+
+```
+
+(a) Fit z to the other 10 columns using multiple regression. What is the sum of squares of the residuals?
+
+```{r message = FALSE}
+reg1 <- lm(z ~ ., data = data)
+summary(reg1)
+anova(reg1)
+```
+
+The sum of squared errors is 92.8. 
+
+(b) Fit z to the other 10 columns, using a neural network with two hidden units and setting maxit = 2000
+and decay = .01. Does this model fit the data better? How do you know?
+
+```{r}
+nn_fit <- nnet(z ~ ., data=data, maxit = 2000, decay = .01,  size=2)
+```
+
+
+This model fits the data better because we've added more hidden nodes, thereby making our model more flexible. The data converges (i.e. no longer fitting or doing gradient descent) at 83.02 (cross-entropy here is comparable to the SSR above), meaning we have a lower loss function than we did in the regression model (SSR of 92.8)
+
+(c) Redo this experiment with the same data and with 5 and 10 hidden units and explain what you see.
+
+```{r}
+nn_fit <- nnet(z ~ ., data=data, maxit = 2000, decay = .01,  size=5)
+```
+
+As expected, increasing the number of hidden nodes from 2 to 5 decreases the loss function even further to 63.97.
+
+```{r}
+nn_fit <- nnet(z ~ ., data=data, maxit = 2000, decay = .01,  size=10)
+```
+
+As expected, increasing the number of hidden nodes even further from 5 to 10 decreases the loss function even further to 58.35. 
+
+# Extra 33 (5 points)
+
+We'll use the MNIST image classification data, available as mnist_all.RData that were used in class during
+the last two weeks. We want to distinguish between 4 and 7. Extract the relevant training data and place
+them in a data frame.
+
+```{r message = FALSE}
+
+data <-load('mnist_all.RData')
+train <- data.frame(train$n, train$x, train$y)
+train <- train[train$train.y == 4 | train$train.y == 7,]
+test <- data.frame(test$n, test$x, test$y)
+test <- test[test$test.y == 4 | test$test.y == 7,]
+```
+
+(a) Pick two features (variables) that have large variances and low correlation. Fit a logistic regression
+model with these two features. Evaluate the model with the AUC score.
+
+```{r message = FALSE, eval = FALSE}
+
+lvlc <- sort(sapply(train , function(x) sd(x)), decreasing = TRUE)[1:20]
+lvlc <- train[,names(lvlc)]
+cor(lvlc)
+
+# X346 and x602 have high variance and low correlation. 
+```
+
+```{r message=FALSE, warning=FALSE}
+
+spec <- as.formula("factor(train.y) ~ X346 + X602")
+
+fit <- glm(formula = spec, data = train, family=binomial)
+
+train$pred <- predict(fit, type = 'response')
+
+r <- roc(train$train.y, train$pred)
+plot(r)
+auc(train$train.y, train$pred)
+
+```
+
+The AUC is 0.772, meaning that it performns alright but not great. 
+
+(b) Create a neural net with one unit in the hidden layer. Train the neural net with the same two features
+as the previous part and evaluate the model with AUC. Compare to the results from (a) and explain.
+
+```{r message=FALSE, warning=FALSE}
+nn_fit <- nnet(formula = spec, data=train, maxit = 2000, decay = .01,  size=1)
+
+train$pred_nn <- predict(nn_fit, type = "r")
+
+r <- roc(train$train.y, train$pred_nn)
+plot(r)
+auc(train$train.y, train$pred_nn)
+```
+
+The neural network model with one hidden layer actually does worse than the logistic model. 
+
+(c) With the same two features, train three different neural nets, each time using more units in the hidden
+layer. How do the results improve, using the AUC?
+
+```{r message=FALSE, warning=FALSE}
+nn_fit2 <- nnet(formula = spec, data=train, maxit = 2000, decay = .01,  size=2)
+
+train$pred_nn2 <- predict(nn_fit2, type = "r")
+
+auc(train$train.y, train$pred_nn2)
+
+nn_fit5 <- nnet(formula = spec, data=train, maxit = 2000, decay = .01,  size=5)
+
+train$pred_nn5 <- predict(nn_fit5, type = "r")
+
+auc(train$train.y, train$pred_nn5)
+
+nn_fit10 <- nnet(formula = spec, data=train, maxit = 2000, decay = .01,  size=10)
+
+train$pred_nn10 <- predict(nn_fit10, type = "r")
+
+auc(train$train.y, train$pred_nn10)
+
+```
+
+The neural network model significantly improves the AUC from the from the model with the logistic regression to the ANN with two hidden layers to the ANN with five hidden layers. There is an improvement from the nnet model with five hidden layers to the model with ten hidden layers as well. It is interesting that there is not an improvement from the logstic model to the nnet models with one layer.
+
+(d) Is there evidence for overfitting in your results in (c)? Use the test data, also availabe in
+mnist_all.RData, to find out.
+
+
+```{r}
+
+test$pred_nn2 <- predict(nn_fit2, newdata = test, type = "r")
+
+auc(test$test.y, test$pred_nn2)
+
+test$pred_nn5 <- predict(nn_fit5, newdata = test, type = "r")
+
+auc(test$test.y, test$pred_nn5)
+
+test$pred_nn10 <- predict(nn_fit10, newdata = test, type = "r")
+
+auc(test$test.y, test$pred_nn10)
+```
+
+The auc for the test set is not drastically different from that of the train set. For the hidden node with two layers, the test set does only slightly worse. The auc for the test set actually does better for five nodes and ten nodes. There is therefore not significant evidence for overfitting. As indicated by the AUCs on the train sets, the bias was not that low, so we should not expect that high of a variance. 
+
+5 points each:
+
+# Extra 36 (5 points)
+
+In the Tensorflow Playground, we can use a "bullseye" dataset to demonstrate non-linear decision boundaries
+that would be impossibly difficult for logistic regression. Here we're going to explore that kind of dataset in a
+simplified version.A one-dimensional bullseye dataset would be like the following. Notice that one of the classes completely surrounds the other.
+
+![Alt text](/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics/26NeNe.jpg)
+
+(a) Fit a logistic regression model to this dataset. Verify that the results are not great.
+
+```{r}
+set.seed(1)
+x = rnorm(50, 0 ,2)
+y<-rep(1, length(x))
+y[abs(x) < 1] = 0
+plot(x,rep(0,length(x)),col=y+1)
+
+```
+
+```{r}
+data <- data.frame(x, y)
+
+fit <- glm(y ~ x, data = data, family=binomial)
+
+data$pred <- predict(fit, type = 'response')
+
+r <- roc(data$y, data$pred)
+plot(r)
+auc(data$y, data$pred)
+
+
+```
+
+The AUC of about .643 is close to the point at .50 where just switching all of our classifications would improve the classification. The ROC curve also shows clearly that the results are not great. 
+
+(b) But we can solve this problem using logistic regression if we employ clever "feature engineering". Create
+a new feature which is just x2. Make a plot of the two features x and x2 and color by class label to
+verify that the two classes are now more easily separable. Fit a logistic regression model and comment
+on the results.
+
+```{r warning = FALSE, message=FALSE}
+data$x2 <- x^2
+ggplot(data, aes(x = x, y = x2, color = factor(y))) + geom_point(size = 1, alpha = 1, na.rm = TRUE) 
+
+fit <- glm(y ~ x + x2, data = data, family=binomial)
+summary(fit)
+# 
+data$pred_2 <- predict(fit, type = 'response')
+# 
+r <- roc(data$y, data$pred_2)
+plot(r)
+auc(data$y, data$pred_2)
+
+
+
+```
+
+According to the ROC and AUC, this model predicts classifications perfectly. Some observations ended up with predicted probabilities of 1. It is important to note that neither X nor X2 are significant. In fact, they are highly insignificant, meaning that we've ended up with very high variability and very low bias (i.e. overfitting).
+
+
+(c) If we never thought of this feature engineering, we can also easily solve this problem with a neural
+network. But importantly, we have to make a network topology such that the hidden layer has higher
+dimensionality than the input layer. Fit a neural network to Y ??? X with two nodes in the hidden layer.
+Verify that we can achieve perfect classification on the training data.
+
+```{r warning=FALSE, message=FALSE}
+nn_fit <- nnet(y ~ x, data= data, maxit = 2000, decay = .01,  size=2)
+
+data$pred_nn <- predict(nn_fit, type = "r")
+
+auc(data$y, data$pred_nn)
+
+```
+
+We achieve perfect classification on the data through this method. 
+
+(d) By projecting the data into a higher-dimensional space, we can separate the two classes. In the case
+of a neural network, the network figured it out for us - we didn't have to do it ourselves. Provide an
+explanation and intuition into how the network can achieve this goal in this particular case. Your
+explanation might rely on helpful visualizations.
+
+When the two classification classes are linearly separable, then we can just use a logistic regression, which uses hyperplanes as decision boundaries. However, when we have nonlinear decision boundaries like we do in this case, neural networks are a useful tool because it uses matrix multiplication to identify a matrix of weights that minimizes the squared loss, as opposed to maximizing likelihood, through nonlinear functions. Any continuous function of n variables can be approximated arbitrarily well by a feed-forward artificial neural network with one hidden layer and finitely many laters (two nodes in that layer in this case) according to the universal approximation property of neural networks. Our model is therefore 
+
+# Extra 37 (5 points)
+
+The data for this exercise are in the UCI Machine Learning Repository, http://archive.ics.uci.edu/ml/index.php.
+We shall use the concrete compressive strength data. For details and a link, refer to problem 11.
+
+
+a) Import the data into your R workspace and change all variable names to something simpler. Split the
+data into a training set (70%) and a test set (30%).
+
+```{r message = FALSE}
+concrete <- read_excel("Concrete_Data.xls")
+colnames(concrete) <- c("cementkg", "blustfur", "flyash", "superplas", "courseagg", "fineagg", "age", "CCS")
+
+# set the seed to make your partition reproductible
+set.seed(246)
+smp_size <- floor(0.80 * nrow(concrete))
+train <- sample(seq_len(nrow(concrete)), size = smp_size)
+concrete_train <- concrete[train,]
+concrete_test <- concrete[-train,]
+```
+
+
+b) Fit artificial neural networks with a single hidden layer and 2, 3, 4, . . . 20 nodes to the training data.
+Compute the root mean squared residuals for each network and plot this quantity against the number
+of hidden nodes.
+
+```{r}
+train_rmsr <- numeric()
+
+for(i in 1:20) {
+  nn_fit <- nnet(CCS ~ ., data= concrete_train, maxit = 2000, decay = .01,  size = i)
+  train_rmsr[i] <- sqrt(mean((predict(nn_fit, type = "r") - concrete_train$CCS)^2))
+}
+
+train_rmsr <- data.frame(cbind(1:20, train_rmsr))
+ggplot(train_rmsr, aes(x = V1, y = train_rmsr)) + geom_point(size = 1, alpha = 1, na.rm = TRUE) 
+```
+
+c) For the networks in b), compute also the root mean squared residuals on the test data and plot them in
+the same graph.
+
+```{r}
+test_rmsr <- numeric()
+
+for(i in 1:20) {
+  nn_fit <- nnet(CCS ~ ., data= concrete_train, maxit = 2000, decay = .01,  size = i)
+  test_rmsr[i] <- sqrt(mean((predict(nn_fit, newdata = concrete_test, type = "r") - concrete_test$CCS)^2))
+}
+
+rmsr <- data.frame(cbind(train_rmsr, test_rmsr))
+
+# melt the data to a long format
+rmsr <- melt(data = rmsr, id.vars = "V1")
+
+# plot
+ggplot(data = rmsr, aes(x = V1, y = value, colour = variable)) + geom_point()
+
+
+```
+
+
+d) Is there evidence of overfitting? How can you tell?
+
+
+When placing the RMSR for the train and test on the same plot, it is clear that there is an overfitting problem. The test set RMSR is consistently higher than the train RMSR, meaning that our model performs worse when applied to new data. 
+
+e) Do you think that the ANN is overfitting the data?
+
+ANN appears to be overfitting the data. Even when there is just one node, the RMSR is much higher than that of the test set. 

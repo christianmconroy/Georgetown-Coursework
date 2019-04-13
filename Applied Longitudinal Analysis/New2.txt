@@ -1,0 +1,5 @@
+Denom. DF: 57 
+              numDF   F-value p-value
+(Intercept)       1 3080.4760  <.0001
+factor(Known)     1    0.8083  0.3724
+Month             1    5.8004  0.0193

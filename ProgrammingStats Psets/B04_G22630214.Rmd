@@ -1,0 +1,78 @@
+---
+title: "B04_G22630214"
+author: "Christian Conroy"
+date: "February 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE, message = FALSE, warning = FALSE}
+if (!require(dplyr)) {
+  install.packages("dplyr")
+  require(dplyr)
+}
+```
+
+```{r, include = FALSE}
+setwd("/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester4MPP/ProgrammingStats") 
+kicks <- read.csv("kicksfootball.csv", header=T)
+```
+
+Clean up data after loading in
+```{r}
+colnames(kicks) <- c("Yards", "Goal", "Practiceormatch")
+kicks$Goal <- ifelse(toupper(kicks$Goal)=="Y", 1,0)
+```
+
+
+Create two subsets based on the variable practiceormatch using the functionality available in dplyr and using piping.
+```{r}
+practice <- kicks %>%
+  filter(Practiceormatch == "P")
+
+match <- kicks %>%
+  filter(Practiceormatch == "M")
+```
+
+## Estimating Two Separate Logistic Models
+Practice
+```{r}
+practlog <- glm(Goal ~ Yards, 
+             data=practice,
+             family=binomial)
+summary(practlog)
+```
+
+Match
+```{r}
+matchlog <- glm(Goal ~ Yards, 
+                data=match,
+                family=binomial)
+summary(matchlog)
+```
+
+We can look at several components of the respective outputs to compare the logitics models. Most significantly, a lower AIC for the practice model shows that the match model appears to be the much "better" model. Although the yards variable demonstrates stronger statistical significance in the pratice model, the match model has drastically lower null and residual deviances. 
+
+## Making Predictions
+Setting up the new data
+```{r}
+inp <- c(40)
+newdata = data.frame(Yards=inp)
+
+```
+
+Predicting for Practice
+```{r}
+predict(practlog, newdata, type="response")
+
+```
+
+
+Predicting for match
+```{r}
+predict(matchlog, newdata, type="response")
+```
+The match logistic model predicts a higher likelihood of the goal being good at that distance. 

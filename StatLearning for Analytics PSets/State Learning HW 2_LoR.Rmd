@@ -1,0 +1,420 @@
+---
+title: "Statistical Learning HW 2 - Logistic Regression"
+author: "Christian Conroy"
+date: "February 10, 2018"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+require(knitr)
+require(ISLR)
+require(SmartEDA)
+require(MASS)
+require(ggplot2)
+require(car)
+
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics")
+```
+
+# 1. Book #6 (3 Points)
+
+Suppose we collect data for a group of students in a statistics class with variables X1 = hours studied, X2 = undergrad GPA, and Y = receive an A. We fit a logistic regression and produce estimated coefficient, $\beta_0$  = ???6, $\beta_1$ = 0.05, $\beta_2$ = 1.
+
+(a) Estimate the probability that a student who studies for 40 h and has an undergrad GPA of 3.5 gets an A in the class.
+
+```{r message = FALSE}
+exp(-6 + .05*40 + 1*3.5)/(1+exp(-6 + .05*40 + 1*3.5))
+```
+
+(b) How many hours would the student in part (a) need to study to have a 50 % chance of getting an A in the class?
+
+```{r message = FALSE}
+# Hours = log(p/1-p) - ((B0 + B2*3.5)/B1)
+log(.50/(1-.50)) - ((-6 + 3.5)/0.05)
+```
+
+
+# 2. Extra #25 (3 Points)
+
+```{r message = FALSE}
+data <-load('mnist_all.RData')
+
+plot_digit <- function(j){
+arr784 <- as.numeric(train$x[j,])
+col=gray(12:1/12)
+image(matrix(arr784, nrow=28)[,28:1], col=col,
+main = paste("this is a ",train$y[j]))
+}
+```
+
+Familiarizing with the data
+```{r message = FALSE}
+# Visualize digits 0-9
+par(mfrow=c(2,5))
+plot_digit(2) #0
+plot_digit(4) #1
+plot_digit(6) #2
+plot_digit(8) #3
+plot_digit(3) #4
+plot_digit(1) #5
+plot_digit(14) #6
+plot_digit(16) #7
+plot_digit(47) #8
+plot_digit(5) #9
+
+
+# find pixels that have zero variability 
+summary(train$x[,10]) # All X at this Y have 0 variability
+summary(train$x[1,100])
+summary(train$x[900,400])
+summary(train$x[,700]) # All X at this Y have 0 variability
+summary(train$x[,781]) # All X at this Y have 0 variability
+
+# find pixels that have positive variability 
+summary(train$x[,100])
+summary(train$x[,200])
+summary(train$x[,300])
+summary(train$x[,400])
+summary(train$x[,500])
+
+# Pick several pairs of features that both have non-zero variability. Make a scatterplot of these two
+# features against each other. Label the datapoints with colors corresponding to the digits.
+x1 <- train$x[,100]
+y1 <- train$x[,200]
+y2 <- train$y
+forplot <- data.frame(x1, y1, y2)
+
+ggplot(forplot, aes(x=x1, y=y1)) +geom_point(aes(col=factor(y2)))
+
+```
+
+Build a classifier, using only one variable (pixel). This variable should have large variation. Give the summary
+of the model and write out the logistic regression equation that has been obtained. Determine the fraction of
+true positives on the test set if the fraction of false positives on the training set is kept to 0.1.
+
+
+```{r message = FALSE}
+# Prep Train Data
+pixels <- data.frame(train$n, train$x, train$y) 
+names(pixels)[1] <- c("N")
+names(pixels)[786] <- c("Digit")
+
+sd(pixels$X350)
+# Looks to be a fairly large Variance
+
+spec1 <- as.formula("factor(Digit) ~ X350")
+
+fit <- glm(formula = spec1 , data = pixels, family=binomial)
+
+pixels$pred = predict(fit, pixels, type = "response")
+pixels$class_pred = predict(fit, pixels, type = "response") > .1
+
+# We create a threshold at .1 and get a Boolean vector based on true prediction or false prediction
+
+#accuracy - which rows did we get the class prediction correctly equal to z
+sum(pixels$class_pred == pixels$Digit) / nrow(pixels)
+
+# confusion matrix
+table(pixels$Digit, pixels$class_pred)
+
+# Use on the test data
+test_pixels <- data.frame(test$n, test$x, test$y) 
+names(test_pixels)[1] <- c("N")
+names(test_pixels)[786] <- c("Digit")
+
+test_pixels$pred <- predict(fit, newdata = test_pixels, type = 'response')
+test_pixels$class_pred = predict(fit, test_pixels, type = "response") > .1
+
+sum(test_pixels$class_pred == test_pixels$Digit) / nrow(test_pixels)
+
+```
+
+The fraction of true positives is 0.112 for the train set and 0.114 for the test set, which is not very good. Because I have a strict threshold, it is harder to get true positives of course. 
+
+# 3. Extra #26 (3 Points)
+
+Choose two variables that have small correlation and large variation. Find the area under the ROC curve
+(auc) using the training data and the test data. Make a scatter plot of the two variables, colored by the type
+of digit, and use this to explain the performance of the classifier.
+
+```{r message = FALSE}
+sd(pixels$X350)
+sd(pixels$X125)
+cor(pixels$X350, pixels$X125)
+# Looks to be decently large variation and small correlation. 
+
+spec2 <- as.formula("factor(Digit) ~ X350 + X125")
+
+fit2 <- glm(formula = spec2, data = pixels, family=binomial)
+
+test_pixels$pred <- predict(fit2, newdata = test_pixels, type = 'response')
+
+```
+
+In the above, I use pixels 350 and 125 because both respectively have fairly large variation and minimal correlation to each other. 
+
+ROC for the Train Data 
+```{r warning = FALSE, message = FALSE}
+
+# install.packages('pROC')
+library(pROC)
+r <- roc(pixels$Digit, pixels$pred)
+plot(r)
+auc(pixels$Digit, pixels$pred)
+
+```
+
+The classification performance is not great, with an AOC of 0.763 that falls between an AOC of 0.5 which would indicate that flipping all predictions might be more effective and 1.0 which would indicate perfect classification. The ROC plot shows as much, with the curve somewhere halfway between a right angle and a diagonal.   
+
+ROC for the Test Data 
+```{r warning = FALSE, message = FALSE}
+
+r <- roc(test_pixels$Digit, test_pixels$pred)
+plot(r)
+auc(test_pixels$Digit, test_pixels$pred)
+```
+
+Because we have less information in the test set, the AOC is a bit lower than that of the train set, but both do fairly average at about halfway between 0.5 and 1. It makes sense that the AOC would be a bit lower on the test set as we don't have the same amount of information that we had on the train set. 
+
+```{r}
+
+ggplot(pixels, aes(x=X350, y=X125)) +geom_point(aes(col=factor(Digit))) 
+
+```
+
+It's pretty clear from the above why it does such a bad job. There is no clear discernible pattern that can be identified in order to delineate between digits. As we saw earlier, there is low correlation between the two pixel variables. 
+
+#4.  #10a-d (5 points)
+
+This question should be answered using the Weekly data set, which is part of the ISLR package. This data is similar in nature to the Smarket data from this chapter's lab, except that it contains 1,089 weekly returns for 21 years, from the beginning of 1990 to the end of 2010.
+
+```{r}
+
+data("Weekly")
+head(Weekly)
+
+```
+
+(a) Produce some numerical and graphical summaries of the Weekly data. Do there appear to be any patterns?
+
+```{r}
+
+# Numerical Summaries 
+summary(Weekly)
+
+cor(Weekly[,-9])
+
+ts.plot(Weekly$Volume)
+ts.plot(Weekly$Today)
+
+```
+
+In looking at the data, it is clear that the there is not a significant difference between the distribution of weekly returns across all lags. It looks as if the market changed more for the positive each week than it did negative. Interestingly, despite distributions being similar across the lagged variables, there is not strong correlation between the variables. It is also interesting that rather than simply becoming weaker in correlation as we lag further away, the correlation switches between negative and positive and decreases and increases in magnitude. 
+
+While the plot for volume shows that the average number of shares traded daily increased from 1990 to 2010, it is less pronounced at the end of the timeline, which is likely the result of the 2008 global financial crisis. The plot for today's price is interesting in that it seems to convey the old adage of passive investing that investing in the market through index funds is often a safe bet as price fluctuations always revert to the mean. 
+
+(b) Use the full data set to perform a logistic regression with Direction as the response and the five lag variables plus Volume as predictors. Use the summary function to print the results. Do any of the predictors appear to be statistically significant? If so, which ones?
+
+```{r}
+
+fit2 <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume , data = Weekly, family=binomial)
+summary(fit2)
+
+
+```
+
+Lag2 is statistically significant at the 95% confidence level. 
+
+(c) Compute the confusion matrix and overall fraction of correct predictions. Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
+
+```{r}
+Weekly$pred = predict(fit2, Weekly, type = "response")
+Weekly$class_pred = predict(fit2, Weekly, type = "response") > .5
+
+# We create a threshold at .5 and get a Boolean vector based on true prediction or false prediction
+
+#accuracy - which rows did we get the class prediction correctly equal to z
+sum(Weekly$class_pred == as.numeric(Weekly$Direction)) / nrow(Weekly)
+
+# confusion matrix
+table(Weekly$Direction, Weekly$class_pred)
+```
+
+The classifer predicted correctly on only 39.5% of observations. The confusion matrix is telling me that there are two key mistakes that can be made by logistic regressions in classification. The first is a false positive, or in this case the number of observations predicted to be Up when they should have been predicted to be down. The confusion matrix shows that this happened for 48 cases. The second is a false negative, or in this case the number of observations predicted to be Down when they should have been predicted to be up. There are 54 of these cases. We use a decision threshold of 0.5. If we raise it to 0.6, meaning that we're comfortable with more false positives and negatives, the amount of cases in our confusion matrix increases.
+
+(d) Now fit the logistic regression model using a training data period from 1990 to 2008, with Lag2 as the only predictor. Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010).
+
+```{r}
+
+
+# Train on 1990 to 2008
+Weekly_PreCrisis <- Weekly[Weekly$Year <= 2008,]
+
+fit3 <- glm(Direction ~ Lag2, data = Weekly_PreCrisis, family=binomial)
+summary(fit3)
+
+Weekly_PreCrisis$pred = predict(fit3, Weekly_PreCrisis, type = "response")
+Weekly_PreCrisis$class_pred = predict(fit3, Weekly_PreCrisis, type = "response") > .5
+
+# We create a threshold at .5 and get a Boolean vector based on true prediction or false prediction
+
+#accuracy - which rows did we get the class prediction correctly equal to z
+sum(Weekly_PreCrisis$class_pred == as.numeric(Weekly_PreCrisis$Direction)) / nrow(Weekly_PreCrisis)
+
+# confusion matrix
+table(Weekly_PreCrisis$Direction, Weekly_PreCrisis$class_pred)
+
+# Test on 2009-2010
+Weekly_PostCrisis <- Weekly[Weekly$Year>2008,]
+
+Weekly_PostCrisis$pred <- predict(fit3, newdata = Weekly_PostCrisis, type = 'response')
+Weekly_PostCrisis$class_pred = predict(fit3, Weekly_PostCrisis, type = "response") > .5
+
+sum(Weekly_PostCrisis$class_pred == as.numeric(Weekly_PostCrisis$Direction)) / nrow(Weekly_PostCrisis)
+
+# confusion matrix
+table(Weekly_PostCrisis$Direction, Weekly_PostCrisis$class_pred)
+
+```
+
+When we restrict the data to the period of 1990 to 2008, we get an accuracy of 42.4% and false positives and negatives of 20 and 23 respectively using a decision threshold of 0.5. The accuracy goes down to 32.7% when we use the "test" dataset of post-2008 data. This makes sense as the stock prices differed drastically as a result of the global financial crisis and so a model trained on returns from 1990-2008 would not be very generalizable to a test set after the effects of the 2008 global financial crisis. 
+
+# 5. Extra #23 (5 points)
+
+Replace the factor variable Purchase with a new numerical variable purchase01 which equals 1 if a customer
+bought Minute Maid orange juice (MM) and equals 0 if she bought Citrus Hill orange juice (CH).
+
+```{r}
+
+data("OJ")
+head(OJ)
+
+```
+
+```{r}
+OJ$purchase01 <- ifelse((OJ$Purchase == "MM"), 1, 0)
+OJ$Purchase <- NULL
+```
+
+a) Fit a logistic model to predict purchase01 from all predictors. Call this model fit.22a. There are several predictors for which a coefficient estimate is not available. Give a reason for each such predictor why this happens. Look for simple arithmetic relations between some of the predictors.
+
+```{r}
+
+# Factor vars that need to  be factors
+OJ$StoreID <- as.factor(OJ$StoreID)
+
+# Change to glm
+fit.22a <- glm(purchase01 ~ . , data = OJ, family = binomial)
+summary(fit.22a)
+
+alias(fit.22a)
+
+```
+
+A coefficient estimate is not available for SalePriceMM, SalePriceCH, PriceDiff, Store7, ListPriceDiff, and STORE. This is due to strong correlation between independent variables (i.e. collinearity). In fact, as the alias analysis above shows, there are several variables that are perfectly collinear. 
+
+
+b) Remove all predictors for which a coefficient estimate is not available and fit a new model. Call this
+model fit.22b. What are the differences between fit.22a and fit.22b, if any?
+
+```{r}
+
+fit.22b <- glm(purchase01 ~ . , data = OJ[,-c(10:13, 16:17)], family = binomial)
+summary(fit.22b)
+
+```
+
+
+Now that the coefficients that could not be estimated due to perfect collinearity are out of the model, we notice that there is no change in the logistic regression summary, with the coefficients, standard errors, t statistics, and p-values remaining the same across models. 
+
+c) Which predictors are significant for fit.22b? Make a new model with only those predictors and call it
+fit.22c. Plot the ROC curve and show that the area under the curve is approximately 0.89.
+
+```{r}
+
+OJ$pred = predict(fit.22b, OJ, type = "response")
+
+r <- roc(OJ$purchase01, OJ$pred)
+plot(r)
+auc(OJ$purchase01, OJ$pred)
+
+```
+
+StoreID7, PriceCH, PriceMM, DisMM, LoyalCH, and PctDiscCH are all statistically significant at either the 95% or 99% confidence levels. 
+
+AOC is 0.904, or approximately 0.89. 
+
+d) Consider now the predicted odds that a customer purchases Minute Maid. How do these odds change if
+the price of Minute Maid is decreased by $0.01? How do these odds change if the price of Citrus Hill is
+increased by $0.01? How do these odds change if the discount offered for Minute Maid is increased by
+$0.01? Note that this is essentially the same as dropping the price for Minute Maid, but the predicted
+effect on the odds is very different.
+
+```{r message = FALSE}
+PriceMM <- OJ
+PriceMM$PriceMM <- PriceMM$PriceMM -.01
+PriceCH <- OJ
+PriceCH$PriceCH <- PriceCH$PriceCH + .01
+DiscMM <- OJ
+DiscMM$DiscMM <- DiscMM$DiscMM +.01
+
+# Price MM Decline
+P1 <- predict(fit.22b, PriceMM, type = "response")
+P0 <- predict(fit.22b, OJ, type = "response")
+
+mean(P1 - P0, na.rm = TRUE)
+
+# Price CH Increase
+P1 <- predict(fit.22b, PriceCH, type = "response")
+P0 <- predict(fit.22b, OJ, type = "response")
+
+mean(P1 - P0, na.rm = TRUE)
+
+# Disc MM Increase
+P1 <- predict(fit.22b, DiscMM, type = "response")
+P0 <- predict(fit.22b, OJ, type = "response")
+
+mean(P1 - P0, na.rm = TRUE)
+```
+
+The odds change by 0.0444 if the price of Minute Maid is decreased by 0.01. The odds change by 0.00551 if the price of Citrus Hill increases by 0.01. The odds change by 0.031 if the discount offered by Minute Maid increases by 0.01. The conclusion then is that the discount offers the best change of persuading more customers to buy Minute Maid. 
+
+# 6. Extra#27 (5 points)
+
+Build a classifier that uses the 10 variables with the largest variances. Make ROC curves for training and
+test data and comment on the performance of the classifier. Is this a good way to select 10 predictors for
+classification? Can you think of other ways of selecting 10 predictors for classification?
+
+```{r message = FALSE, warning = FALSE}
+# Get variables with the largest variance
+all.sd <- apply(pixels, 2, sd)
+head(sort(all.sd, decreasing=TRUE), 10)
+
+# Build classified using those variables
+fit6 <- glm(factor(Digit) ~ X379 + X407 + X462 + X628 + X463 + X435 + X438 + X434 + X629 + X410 , data = pixels, family = binomial)
+
+# Predict using train data 
+pixels$pred = predict(fit6, pixels, type = "response")
+
+# Build the ROC Curve and Get AOC
+r <- roc(pixels$Digit, pixels$pred)
+plot(r)
+auc(pixels$Digit, pixels$pred)
+
+# Predict using test data 
+test_pixels$pred <- predict(fit6, newdata = test_pixels, type = 'response')
+
+# Build the ROC Curve and Get AOC
+r <- roc(test_pixels$Digit, test_pixels$pred)
+plot(r)
+auc(test_pixels$Digit, test_pixels$pred)
+
+```
+
+The predictors do a very good job at classification, as indicating by the fact that the ROC curves are both near right degree angles and the associated AOC are both very lose to 1. While this is probably the best way of selecting predictors for classification, I could also imagine using principal component analysis for classification. The idea is that we would look at all of the predictors and find combined components that explain the highest percentage in the variance of the predicted probability of being a digit. 

@@ -1,0 +1,624 @@
+"Country" "Democracy" "ID" "Decade" "Risk" "Time"
+"USA" 1 1 "Y1" 0.0005722 1
+"USA" 1 1 "Y2" 0.0005451 2
+"USA" 1 1 "Y3" 0.0008545 3
+"USA" 1 1 "Y4" 0.0011186 4
+"USA" 1 1 "Y5" 0.0005317 5
+"Cananda" 1 2 "Y1" 0.0011427 1
+"Cananda" 1 2 "Y2" 0.0008444 2
+"Cananda" 1 2 "Y3" 0.0019278 3
+"Cananda" 1 2 "Y4" 0.0011535 4
+"Cananda" 1 2 "Y5" 0.0012483 5
+"Bahamas" 1 3 "Y1" 0.001935 1
+"Bahamas" 1 3 "Y2" 0.0024053 2
+"Bahamas" 1 3 "Y3" 0.0025369 3
+"Bahamas" 1 3 "Y4" 0.0010593 4
+"Bahamas" 1 3 "Y5" 0.0009138 5
+"Cuba" 0 4 "Y1" 0.0014549 1
+"Cuba" 0 4 "Y2" 0.0011092 2
+"Cuba" 0 4 "Y3" 0.0040525 3
+"Cuba" 0 4 "Y4" 0.0012317 4
+"Cuba" 0 4 "Y5" 0.0011515 5
+"Haiti" 0 5 "Y1" 0.003426 1
+"Haiti" 0 5 "Y2" 0.0224373 2
+"Haiti" 0 5 "Y3" 0.0505381 3
+"Haiti" 0 5 "Y4" 0.0134209 4
+"Haiti" 0 5 "Y5" 0.0109773 5
+"Dominican Rep" 1 6 "Y1" 0.005729 1
+"Dominican Rep" 1 6 "Y2" 0.0045513 2
+"Dominican Rep" 1 6 "Y3" 0.0053224 3
+"Dominican Rep" 1 6 "Y4" 0.003391 4
+"Dominican Rep" 1 6 "Y5" 0.0017256 5
+"Jamaica" 1 7 "Y1" 0.0021932 1
+"Jamaica" 1 7 "Y2" 0.0027259 2
+"Jamaica" 1 7 "Y3" 0.0020853 3
+"Jamaica" 1 7 "Y4" 0.0013484 4
+"Jamaica" 1 7 "Y5" 0.0012285 5
+"Trinidad and Tobago" 1 8 "Y1" 0.0024868 1
+"Trinidad and Tobago" 1 8 "Y2" 0.0038959 2
+"Trinidad and Tobago" 1 8 "Y3" 0.0025621 3
+"Trinidad and Tobago" 1 8 "Y4" 0.0016838 4
+"Trinidad and Tobago" 1 8 "Y5" 0.0018345 5
+"Barbados" 1 9 "Y1" 0.0023185 1
+"Barbados" 1 9 "Y2" 0.0017952 2
+"Barbados" 1 9 "Y3" 0.001892 3
+"Barbados" 1 9 "Y4" 0.00093 4
+"Barbados" 1 9 "Y5" 0.0009897 5
+"Dominica" 1 10 "Y1" 0.0012486 1
+"Dominica" 1 10 "Y2" 0.002801 2
+"Dominica" 1 10 "Y3" 0.00208 3
+"Dominica" 1 10 "Y4" 0.0008576 4
+"Dominica" 1 10 "Y5" 0.0011335 5
+"St Lucia" 1 11 "Y1" 0.0018129 1
+"St Lucia" 1 11 "Y2" 0.0022987 2
+"St Lucia" 1 11 "Y3" 0.0016505 3
+"St Lucia" 1 11 "Y4" 0.0011035 4
+"St Lucia" 1 11 "Y5" 0.0009789 5
+"St Vincent" 1 12 "Y1" 0.0023158 1
+"St Vincent" 1 12 "Y2" 0.0035997 2
+"St Vincent" 1 12 "Y3" 0.0019546 3
+"St Vincent" 1 12 "Y4" 0.0010521 4
+"St Vincent" 1 12 "Y5" 0.0012511 5
+"Antigua and Barbuda" 1 13 "Y2" 0.0029539 2
+"Antigua and Barbuda" 1 13 "Y3" 0.0016878 3
+"Antigua and Barbuda" 1 13 "Y4" 0.0008881 4
+"Antigua and Barbuda" 1 13 "Y5" 0.0008327 5
+"St Kitts and Nevis" 1 14 "Y2" 0.0026465 2
+"St Kitts and Nevis" 1 14 "Y3" 0.0015651 3
+"St Kitts and Nevis" 1 14 "Y4" 0.0008548 4
+"St Kitts and Nevis" 1 14 "Y5" 0.0007268 5
+"Belize" 1 15 "Y2" 0.0052668 2
+"Belize" 1 15 "Y3" 0.0034492 3
+"Belize" 1 15 "Y4" 0.0011706 4
+"Belize" 1 15 "Y5" 0.001362 5
+"Costa Rica" 1 16 "Y1" 0.0022245 1
+"Costa Rica" 1 16 "Y2" 0.0027938 2
+"Costa Rica" 1 16 "Y3" 0.0023107 3
+"Costa Rica" 1 16 "Y4" 0.001174 4
+"Costa Rica" 1 16 "Y5" 0.0009467 5
+"Colombia" 1 17 "Y1" 0.0030631 1
+"Colombia" 1 17 "Y2" 0.002799 2
+"Colombia" 1 17 "Y3" 0.0033375 3
+"Colombia" 1 17 "Y4" 0.0020438 4
+"Colombia" 1 17 "Y5" 0.0016269 5
+"UKG" 1 18 "Y1" 0.0017069 1
+"UKG" 1 18 "Y2" 0.0013157 2
+"UKG" 1 18 "Y3" 0.0022688 3
+"UKG" 1 18 "Y4" 0.0006817 4
+"UKG" 1 18 "Y5" 0.0015387 5
+"Ireland" 1 19 "Y1" 0.0020451 1
+"Ireland" 1 19 "Y2" 0.001763 2
+"Ireland" 1 19 "Y3" 0.0022447 3
+"Ireland" 1 19 "Y4" 0.0004946 4
+"Ireland" 1 19 "Y5" 0.0005682 5
+"Netherlands" 1 20 "Y1" 0.0008418 1
+"Netherlands" 1 20 "Y2" 0.0010826 2
+"Netherlands" 1 20 "Y3" 0.0017077 3
+"Netherlands" 1 20 "Y4" 0.0005481 4
+"Netherlands" 1 20 "Y5" 0.0006039 5
+"Belgium" 1 21 "Y1" 0.0011091 1
+"Belgium" 1 21 "Y2" 0.0013837 2
+"Belgium" 1 21 "Y3" 0.0025944 3
+"Belgium" 1 21 "Y4" 0.000569 4
+"Belgium" 1 21 "Y5" 0.000634 5
+"Luxembourg" 1 22 "Y1" 0.0006373 1
+"Luxembourg" 1 22 "Y2" 0.0011138 2
+"Luxembourg" 1 22 "Y3" 0.0014818 3
+"Luxembourg" 1 22 "Y4" 0.0002825 4
+"Luxembourg" 1 22 "Y5" 0.0011266 5
+"France" 1 23 "Y1" 0.0022259 1
+"France" 1 23 "Y2" 0.0022423 2
+"France" 1 23 "Y3" 0.0028102 3
+"France" 1 23 "Y4" 0.0009505 4
+"France" 1 23 "Y5" 0.0009923 5
+"Monaco" 0 24 "Y1" 0.0007618 1
+"Monaco" 0 24 "Y2" 0.0008519 2
+"Monaco" 0 24 "Y3" 0.0011148 3
+"Monaco" 0 24 "Y4" 0.0005271 4
+"Monaco" 0 24 "Y5" 0.0003514 5
+"Liechtenstein" 0 25 "Y1" 0.0010526 1
+"Liechtenstein" 0 25 "Y2" 0.0010384 2
+"Liechtenstein" 0 25 "Y3" 0.0008624 3
+"Liechtenstein" 0 25 "Y4" 0.0004738 4
+"Liechtenstein" 0 25 "Y5" 0.0003139 5
+"Switzerland" 1 26 "Y1" 0.0010892 1
+"Switzerland" 1 26 "Y2" 0.0009489 2
+"Switzerland" 1 26 "Y3" 0.0017664 3
+"Switzerland" 1 26 "Y4" 0.0004324 4
+"Switzerland" 1 26 "Y5" 0.0004048 5
+"Andorra" 1 27 "Y2" 0.0021538 2
+"Andorra" 1 27 "Y3" 0.0020257 3
+"Andorra" 1 27 "Y4" 0.0004371 4
+"Andorra" 1 27 "Y5" 0.0003438 5
+"Germany" 1 28 "Y1" 0.0025445 1
+"Germany" 1 28 "Y2" 0.0013218 2
+"Germany" 1 28 "Y3" 0.0045304 3
+"Germany" 1 28 "Y4" 0.0007906 4
+"Germany" 1 28 "Y5" 0.0009184 5
+"Germany East" 0 29 "Y1" 0.0027976 1
+"Germany East" 0 29 "Y2" 0.0013131 2
+"Germany East" 0 29 "Y3" 0.0012984 3
+"Austria" 1 30 "Y1" 0.0045763 1
+"Austria" 1 30 "Y2" 0.0015017 2
+"Austria" 1 30 "Y3" 0.0024222 3
+"Austria" 1 30 "Y4" 0.0007099 4
+"Austria" 1 30 "Y5" 0.0006338 5
+"Czech Rep" 1 31 "Y3" 0.0018238 3
+"Czech Rep" 1 31 "Y4" 0.0008603 4
+"Czech Rep" 1 31 "Y5" 0.0006162 5
+"Slovakia" 1 32 "Y3" 0.0018618 3
+"Slovakia" 1 32 "Y4" 0.0009853 4
+"Slovakia" 1 32 "Y5" 0.0010467 5
+"Italy" 1 33 "Y1" 0.0016378 1
+"Italy" 1 33 "Y2" 0.0016121 2
+"Italy" 1 33 "Y3" 0.00245 3
+"Italy" 1 33 "Y4" 0.0006493 4
+"Italy" 1 33 "Y5" 0.0007516 5
+"San Marino" 1 34 "Y1" 0.0002148 1
+"San Marino" 1 34 "Y2" 0.0004443 2
+"San Marino" 1 34 "Y3" 0.0006625 3
+"San Marino" 1 34 "Y4" 0.0001717 4
+"San Marino" 1 34 "Y5" 0.0002288 5
+"Malta" 1 35 "Y1" 0.0025507 1
+"Malta" 1 35 "Y2" 0.0021427 2
+"Malta" 1 35 "Y3" 0.0026583 3
+"Malta" 1 35 "Y4" 0.0004786 4
+"Malta" 1 35 "Y5" 0.0005975 5
+"Montenegro" 1 36 "Y4" 0.0007609 4
+"Montenegro" 1 36 "Y5" 0.0008653 5
+"Macedonia" 1 37 "Y3" 0.0096767 3
+"Macedonia" 1 37 "Y4" 0.0013781 4
+"Macedonia" 1 37 "Y5" 0.0033037 5
+"Yugoslavia" 0 38 "Y1" 0.0076675 1
+"Yugoslavia" 0 38 "Y2" 0.0040269 2
+"Yugoslavia" 0 38 "Y3" 0.0205244 3
+"Bosnia" 0 39 "Y3" 0.0035817 3
+"Bosnia" 0 39 "Y4" 0.0012711 4
+"Bosnia" 0 39 "Y5" 0.0007482 5
+"Kosovo" 1 40 "Y4" 0.0009798 4
+"Kosovo" 1 40 "Y5" 0.0018568 5
+"Slovenia" 1 41 "Y3" 0.0027646 3
+"Slovenia" 1 41 "Y4" 0.0009133 4
+"Slovenia" 1 41 "Y5" 0.0005982 5
+"Greece" 1 42 "Y1" 0.0158947 1
+"Greece" 1 42 "Y2" 0.0058809 2
+"Greece" 1 42 "Y3" 0.0043719 3
+"Greece" 1 42 "Y4" 0.000724 4
+"Greece" 1 42 "Y5" 0.0010848 5
+"Cyprus" 0 43 "Y1" 0.019494 1
+"Cyprus" 0 43 "Y2" 0.0034692 2
+"Cyprus" 0 43 "Y3" 0.0027773 3
+"Cyprus" 0 43 "Y4" 0.0005948 4
+"Cyprus" 0 43 "Y5" 0.0004345 5
+"Moldova" 1 44 "Y3" 0.0111563 3
+"Moldova" 1 44 "Y4" 0.002049 4
+"Moldova" 1 44 "Y5" 0.0016437 5
+"Soviet Union" 0 45 "Y1" 0.0014949 1
+"Soviet Union" 0 45 "Y2" 0.0013443 2
+"Soviet Union" 0 45 "Y3" 0.0168159 3
+"Estonia" 1 46 "Y3" 0.0063209 3
+"Estonia" 1 46 "Y4" 0.0008354 4
+"Estonia" 1 46 "Y5" 0.0008734 5
+"Latvia" 1 47 "Y3" 0.0096498 3
+"Latvia" 1 47 "Y4" 0.0010024 4
+"Latvia" 1 47 "Y5" 0.0008041 5
+"Lithuania" 1 48 "Y3" 0.007929 3
+"Lithuania" 1 48 "Y4" 0.0011517 4
+"Lithuania" 1 48 "Y5" 0.0007509 5
+"Ukraine" 1 49 "Y3" 0.0090544 3
+"Ukraine" 1 49 "Y4" 0.0014727 4
+"Ukraine" 1 49 "Y5" 0.0037225 5
+"Belarus" 0 50 "Y3" 0.0055018 3
+"Belarus" 0 50 "Y4" 0.0023301 4
+"Belarus" 0 50 "Y5" 0.0018186 5
+"Armenia" 0 51 "Y3" 0.0211825 3
+"Armenia" 0 51 "Y4" 0.0014492 4
+"Armenia" 0 51 "Y5" 0.0012923 5
+"Azerbaijan" 0 52 "Y3" 0.0303783 3
+"Azerbaijan" 0 52 "Y4" 0.0033951 4
+"Azerbaijan" 0 52 "Y5" 0.0018125 5
+"Finland" 1 53 "Y1" 0.0013066 1
+"Finland" 1 53 "Y2" 0.0011309 2
+"Finland" 1 53 "Y3" 0.0026328 3
+"Finland" 1 53 "Y4" 0.000869 4
+"Finland" 1 53 "Y5" 0.0010356 5
+"Sweden" 1 54 "Y1" 0.000772 1
+"Sweden" 1 54 "Y2" 0.0011572 2
+"Sweden" 1 54 "Y3" 0.0024923 3
+"Sweden" 1 54 "Y4" 0.0005211 4
+"Sweden" 1 54 "Y5" 0.0006921 5
+"Norway" 1 55 "Y1" 0.0009715 1
+"Norway" 1 55 "Y2" 0.0014691 2
+"Norway" 1 55 "Y3" 0.0021007 3
+"Norway" 1 55 "Y4" 0.0005285 4
+"Norway" 1 55 "Y5" 0.000619 5
+"Denmark" 1 56 "Y1" 0.0017152 1
+"Denmark" 1 56 "Y2" 0.0010519 2
+"Denmark" 1 56 "Y3" 0.0017927 3
+"Denmark" 1 56 "Y4" 0.0004376 4
+"Denmark" 1 56 "Y5" 0.0007137 5
+"Iceland" 1 57 "Y1" 0.0006811 1
+"Iceland" 1 57 "Y2" 0.0010937 2
+"Iceland" 1 57 "Y3" 0.0016199 3
+"Iceland" 1 57 "Y4" 0.0003795 4
+"Iceland" 1 57 "Y5" 0.0003504 5
+"Guinea Bissau" 0 58 "Y1" 0.0049593 1
+"Guinea Bissau" 0 58 "Y2" 0.0288443 2
+"Guinea Bissau" 0 58 "Y3" 0.0492148 3
+"Guinea Bissau" 0 58 "Y4" 0.0498459 4
+"Guinea Bissau" 0 58 "Y5" 0.0424455 5
+"Equatorial Guinea" 0 59 "Y1" 0.0135825 1
+"Equatorial Guinea" 0 59 "Y2" 0.0102259 2
+"Equatorial Guinea" 0 59 "Y3" 0.0061256 3
+"Equatorial Guinea" 0 59 "Y4" 0.0048916 4
+"Equatorial Guinea" 0 59 "Y5" 0.003538 5
+"Gambia" 0 60 "Y1" 0.0039626 1
+"Gambia" 0 60 "Y2" 0.0107892 2
+"Gambia" 0 60 "Y3" 0.019942 3
+"Gambia" 0 60 "Y4" 0.0080062 4
+"Gambia" 0 60 "Y5" 0.0045796 5
+"Mauritania" 0 61 "Y1" 0.0163708 1
+"Mauritania" 0 61 "Y2" 0.0281467 2
+"Mauritania" 0 61 "Y3" 0.0228294 3
+"Mauritania" 0 61 "Y4" 0.0272975 4
+"Mauritania" 0 61 "Y5" 0.0140157 5
+"Ivory Coast" 0 62 "Y1" 0.0089471 1
+"Ivory Coast" 0 62 "Y2" 0.0107346 2
+"Ivory Coast" 0 62 "Y3" 0.0080713 3
+"Ivory Coast" 0 62 "Y4" 0.0311551 4
+"Ivory Coast" 0 62 "Y5" 0.0065768 5
+"Guinea" 0 63 "Y1" 0.0047137 1
+"Guinea" 0 63 "Y2" 0.0193115 2
+"Guinea" 0 63 "Y3" 0.0159809 3
+"Guinea" 0 63 "Y4" 0.0275389 4
+"Guinea" 0 63 "Y5" 0.0153034 5
+"Burkina Faso" 0 64 "Y1" 0.0178781 1
+"Burkina Faso" 0 64 "Y2" 0.0485339 2
+"Burkina Faso" 0 64 "Y3" 0.021067 3
+"Burkina Faso" 0 64 "Y4" 0.004375 4
+"Burkina Faso" 0 64 "Y5" 0.0375512 5
+"Togo" 0 65 "Y1" 0.0198493 1
+"Togo" 0 65 "Y2" 0.0082016 2
+"Togo" 0 65 "Y3" 0.0494723 3
+"Togo" 0 65 "Y4" 0.0103544 4
+"Togo" 0 65 "Y5" 0.0054619 5
+"Cameroon" 0 66 "Y1" 0.00773 1
+"Cameroon" 0 66 "Y2" 0.0148668 2
+"Cameroon" 0 66 "Y3" 0.0089379 3
+"Cameroon" 0 66 "Y4" 0.0044028 4
+"Cameroon" 0 66 "Y5" 0.0036588 5
+"Gabon" 0 67 "Y1" 0.0104493 1
+"Gabon" 0 67 "Y2" 0.0068775 2
+"Gabon" 0 67 "Y3" 0.0085272 3
+"Gabon" 0 67 "Y4" 0.0030902 4
+"Gabon" 0 67 "Y5" 0.0017893 5
+"Cen African Rep" 0 68 "Y1" 0.0430823 1
+"Cen African Rep" 0 68 "Y2" 0.0287555 2
+"Cen African Rep" 0 68 "Y3" 0.0308921 3
+"Cen African Rep" 0 68 "Y4" 0.0173191 4
+"Cen African Rep" 0 68 "Y5" 0.0250939 5
+"Chad" 0 69 "Y1" 0.1069962 1
+"Chad" 0 69 "Y2" 0.0534465 2
+"Chad" 0 69 "Y3" 0.0162758 3
+"Chad" 0 69 "Y4" 0.0103664 4
+"Chad" 0 69 "Y5" 0.0058728 5
+"Congo-Brz" 0 70 "Y1" 0.0265728 1
+"Congo-Brz" 0 70 "Y2" 0.0074424 2
+"Congo-Brz" 0 70 "Y3" 0.0228528 3
+"Congo-Brz" 0 70 "Y4" 0.0076155 4
+"Congo-Brz" 0 70 "Y5" 0.0067241 5
+"Congo/Zaire" 0 71 "Y1" 0.0094041 1
+"Congo/Zaire" 0 71 "Y2" 0.0159798 2
+"Congo/Zaire" 0 71 "Y3" 0.0210559 3
+"Congo/Zaire" 0 71 "Y4" 0.0088717 4
+"Congo/Zaire" 0 71 "Y5" 0.006084 5
+"Uganda" 0 72 "Y1" 0.0192806 1
+"Uganda" 0 72 "Y2" 0.0807021 2
+"Uganda" 0 72 "Y3" 0.0184776 3
+"Uganda" 0 72 "Y4" 0.0059186 4
+"Uganda" 0 72 "Y5" 0.0037981 5
+"Tanzania" 0 73 "Y1" 0.0074601 1
+"Tanzania" 0 73 "Y2" 0.0048956 2
+"Tanzania" 0 73 "Y3" 0.005739 3
+"Tanzania" 0 73 "Y4" 0.0037381 4
+"Tanzania" 0 73 "Y5" 0.0016853 5
+"Rwanda" 0 74 "Y1" 0.0194099 1
+"Rwanda" 0 74 "Y2" 0.0165367 2
+"Rwanda" 0 74 "Y3" 0.0503118 3
+"Rwanda" 0 74 "Y4" 0.0076399 4
+"Rwanda" 0 74 "Y5" 0.0040659 5
+"Somalia" 0 75 "Y1" 0.0187919 1
+"Somalia" 0 75 "Y2" 0.0324324 2
+"Somalia" 0 75 "Y3" 0.004995 3
+"Somalia" 0 75 "Y5" 0.0242659 5
+"Djibouti" 0 76 "Y1" 0.0067218 1
+"Djibouti" 0 76 "Y2" 0.0142015 2
+"Djibouti" 0 76 "Y3" 0.0274673 3
+"Djibouti" 0 76 "Y4" 0.0047748 4
+"Djibouti" 0 76 "Y5" 0.003766 5
+"Ethiopia" 0 77 "Y1" 0.0334184 1
+"Ethiopia" 0 77 "Y2" 0.0218361 2
+"Ethiopia" 0 77 "Y3" 0.00957 3
+"Ethiopia" 0 77 "Y4" 0.0036476 4
+"Ethiopia" 0 77 "Y5" 0.0038095 5
+"Eritrea" 0 78 "Y3" 0.005405 3
+"Eritrea" 0 78 "Y4" 0.0043391 4
+"Eritrea" 0 78 "Y5" 0.0021483 5
+"Angola" 0 79 "Y1" 0.0118569 1
+"Angola" 0 79 "Y2" 0.019432 2
+"Angola" 0 79 "Y3" 0.0167457 3
+"Angola" 0 79 "Y4" 0.0050454 4
+"Angola" 0 79 "Y5" 0.0030998 5
+"Mozambique" 0 80 "Y1" 0.0101976 1
+"Mozambique" 0 80 "Y2" 0.0111345 2
+"Mozambique" 0 80 "Y3" 0.0087013 3
+"Mozambique" 0 80 "Y4" 0.0035683 4
+"Mozambique" 0 80 "Y5" 0.0020633 5
+"Zimbabwe" 0 81 "Y1" 0.0265589 1
+"Zimbabwe" 0 81 "Y2" 0.0114663 2
+"Zimbabwe" 0 81 "Y3" 0.0079214 3
+"Zimbabwe" 0 81 "Y4" 0.0042071 4
+"Zimbabwe" 0 81 "Y5" 0.0024835 5
+"Namibia" 0 82 "Y3" 0.0049955 3
+"Namibia" 0 82 "Y4" 0.0022499 4
+"Namibia" 0 82 "Y5" 0.0013259 5
+"Botswana" 0 83 "Y1" 0.0078272 1
+"Botswana" 0 83 "Y2" 0.0035253 2
+"Botswana" 0 83 "Y3" 0.0030645 3
+"Botswana" 0 83 "Y4" 0.0024344 4
+"Botswana" 0 83 "Y5" 0.0013222 5
+"Swaziland" 0 84 "Y1" 0.0090018 1
+"Swaziland" 0 84 "Y2" 0.0100378 2
+"Swaziland" 0 84 "Y3" 0.0042801 3
+"Swaziland" 0 84 "Y4" 0.0039826 4
+"Swaziland" 0 84 "Y5" 0.0022795 5
+"Madagascar" 0 85 "Y1" 0.0114135 1
+"Madagascar" 0 85 "Y2" 0.0070345 2
+"Madagascar" 0 85 "Y3" 0.0180241 3
+"Madagascar" 0 85 "Y4" 0.0083158 4
+"Madagascar" 0 85 "Y5" 0.0159787 5
+"Mauritius" 1 86 "Y1" 0.0055545 1
+"Mauritius" 1 86 "Y2" 0.0049938 2
+"Mauritius" 1 86 "Y3" 0.0031667 3
+"Mauritius" 1 86 "Y4" 0.0020321 4
+"Mauritius" 1 86 "Y5" 0.0014057 5
+"Seychelles" 0 87 "Y1" 0.0131832 1
+"Seychelles" 0 87 "Y2" 0.0039832 2
+"Seychelles" 0 87 "Y3" 0.0037984 3
+"Seychelles" 0 87 "Y4" 0.0022356 4
+"Seychelles" 0 87 "Y5" 0.0011104 5
+"Morocco" 0 88 "Y1" 0.0064334 1
+"Morocco" 0 88 "Y2" 0.0106525 2
+"Morocco" 0 88 "Y3" 0.0040518 3
+"Morocco" 0 88 "Y4" 0.0020712 4
+"Morocco" 0 88 "Y5" 0.0035163 5
+"Algeria" 0 89 "Y1" 0.0203455 1
+"Algeria" 0 89 "Y2" 0.009307 2
+"Algeria" 0 89 "Y3" 0.0300465 3
+"Algeria" 0 89 "Y4" 0.0052596 4
+"Algeria" 0 89 "Y5" 0.0027837 5
+"Tunisia" 0 90 "Y1" 0.001864 1
+"Tunisia" 0 90 "Y2" 0.0067305 2
+"Tunisia" 0 90 "Y3" 0.0042958 3
+"Tunisia" 0 90 "Y4" 0.0020893 4
+"Tunisia" 0 90 "Y5" 0.0047277 5
+"Libya" 0 91 "Y1" 0.0054392 1
+"Libya" 0 91 "Y2" 0.0041517 2
+"Libya" 0 91 "Y3" 0.0039117 3
+"Libya" 0 91 "Y4" 0.0024537 4
+"Libya" 0 91 "Y5" 0.0038433 5
+"Sudan" 0 92 "Y1" 0.0190972 1
+"Sudan" 0 92 "Y2" 0.0354789 2
+"Sudan" 0 92 "Y3" 0.0262338 3
+"Sudan" 0 92 "Y4" 0.0067586 4
+"Sudan" 0 92 "Y5" 0.0043255 5
+"South Sudan" 0 93 "Y5" 0.0150644 5
+"Iran" 0 94 "Y1" 0.0037437 1
+"Iran" 0 94 "Y2" 0.0061483 2
+"Iran" 0 94 "Y3" 0.0038404 3
+"Iran" 0 94 "Y4" 0.0033879 4
+"Iran" 0 94 "Y5" 0.0017524 5
+"Egypt" 0 95 "Y1" 0.005833 1
+"Egypt" 0 95 "Y2" 0.0157197 2
+"Egypt" 0 95 "Y3" 0.00402 3
+"Egypt" 0 95 "Y4" 0.0021633 4
+"Egypt" 0 95 "Y5" 0.0253689 5
+"Syria" 0 96 "Y1" 0.0079237 1
+"Syria" 0 96 "Y2" 0.0049059 2
+"Syria" 0 96 "Y3" 0.0023209 3
+"Syria" 0 96 "Y4" 0.0021604 4
+"Syria" 0 96 "Y5" 0.0039908 5
+"Jordan" 0 97 "Y1" 0.0025356 1
+"Jordan" 0 97 "Y2" 0.0017243 2
+"Jordan" 0 97 "Y3" 0.0020588 3
+"Jordan" 0 97 "Y4" 0.0015046 4
+"Jordan" 0 97 "Y5" 0.0013874 5
+"Israel" 1 98 "Y1" 0.0046454 1
+"Israel" 1 98 "Y2" 0.0018187 2
+"Israel" 1 98 "Y3" 0.0014552 3
+"Israel" 1 98 "Y4" 0.0009898 4
+"Israel" 1 98 "Y5" 0.0011898 5
+"Saudi Arabia" 0 99 "Y1" 0.0042911 1
+"Saudi Arabia" 0 99 "Y2" 0.0036504 2
+"Saudi Arabia" 0 99 "Y3" 0.0022711 3
+"Saudi Arabia" 0 99 "Y4" 0.0017153 4
+"Saudi Arabia" 0 99 "Y5" 0.0016474 5
+"Yemen" 0 100 "Y1" 0.0137381 1
+"Yemen" 0 100 "Y2" 0.0095307 2
+"Yemen" 0 100 "Y3" 0.0073487 3
+"Yemen" 0 100 "Y4" 0.0033923 4
+"Yemen" 0 100 "Y5" 0.010085 5
+"Yemen South" 0 101 "Y1" 0.0152399 1
+"Yemen South" 0 101 "Y2" 0.0054681 2
+"Yemen South" 0 101 "Y3" 0.0024505 3
+"Kuwait" 0 102 "Y1" 0.0031651 1
+"Kuwait" 0 102 "Y2" 0.001742 2
+"Kuwait" 0 102 "Y3" 0.0018863 3
+"Kuwait" 0 102 "Y4" 0.0012589 4
+"Kuwait" 0 102 "Y5" 0.0018654 5
+"Bahrain" 0 103 "Y1" 0.0018602 1
+"Bahrain" 0 103 "Y2" 0.0012842 2
+"Bahrain" 0 103 "Y3" 0.0018106 3
+"Bahrain" 0 103 "Y4" 0.0009601 4
+"Bahrain" 0 103 "Y5" 0.0011285 5
+"Qatar" 0 104 "Y1" 0.0025652 1
+"Qatar" 0 104 "Y2" 0.0014818 2
+"Qatar" 0 104 "Y3" 0.0045113 3
+"Qatar" 0 104 "Y4" 0.0014825 4
+"Qatar" 0 104 "Y5" 0.0013862 5
+"United Arab Emirates" 0 105 "Y1" 0.0026665 1
+"United Arab Emirates" 0 105 "Y2" 0.0017929 2
+"United Arab Emirates" 0 105 "Y3" 0.001948 3
+"United Arab Emirates" 0 105 "Y4" 0.0019305 4
+"United Arab Emirates" 0 105 "Y5" 0.0011479 5
+"Oman" 0 106 "Y1" 0.0012769 1
+"Oman" 0 106 "Y2" 0.0009022 2
+"Oman" 0 106 "Y3" 0.0013301 3
+"Oman" 0 106 "Y4" 0.0007827 4
+"Oman" 0 106 "Y5" 0.0012125 5
+"Afghanistan" 0 107 "Y1" 0.0320562 1
+"Afghanistan" 0 107 "Y2" 0.0175549 2
+"Afghanistan" 0 107 "Y3" 0.0338046 3
+"Afghanistan" 0 107 "Y4" 0.0092657 4
+"Afghanistan" 0 107 "Y5" 0.0030769 5
+"Turkmenistan" 0 108 "Y3" 0.0105203 3
+"Turkmenistan" 0 108 "Y4" 0.0039103 4
+"Turkmenistan" 0 108 "Y5" 0.0018056 5
+"Tajikistan" 0 109 "Y3" 0.0094525 3
+"Tajikistan" 0 109 "Y4" 0.0029611 4
+"Tajikistan" 0 109 "Y5" 0.0033923 5
+"Kyrgyzstan" 0 110 "Y3" 0.0127688 3
+"Kyrgyzstan" 0 110 "Y4" 0.0031988 4
+"Kyrgyzstan" 0 110 "Y5" 0.0018247 5
+"Uzbekistan" 0 111 "Y3" 0.0094818 3
+"Uzbekistan" 0 111 "Y4" 0.0057643 4
+"Uzbekistan" 0 111 "Y5" 0.0016019 5
+"Kazakhstan" 0 112 "Y3" 0.0087759 3
+"Kazakhstan" 0 112 "Y4" 0.0017224 4
+"Kazakhstan" 0 112 "Y5" 0.0021733 5
+"China" 0 113 "Y1" 0.0053627 1
+"China" 0 113 "Y2" 0.0039617 2
+"China" 0 113 "Y3" 0.0097821 3
+"China" 0 113 "Y4" 0.0009753 4
+"China" 0 113 "Y5" 0.0005824 5
+"Korea North" 0 114 "Y1" 0.0067029 1
+"Korea North" 0 114 "Y2" 0.0041969 2
+"Korea North" 0 114 "Y3" 0.0070149 3
+"Korea North" 0 114 "Y4" 0.0044021 4
+"Korea North" 0 114 "Y5" 0.0052418 5
+"Japan" 1 115 "Y1" 0.0010798 1
+"Japan" 1 115 "Y2" 0.0009716 2
+"Japan" 1 115 "Y3" 0.0026417 3
+"Japan" 1 115 "Y4" 0.0008771 4
+"Japan" 1 115 "Y5" 0.0006588 5
+"India" 1 116 "Y1" 0.004369 1
+"India" 1 116 "Y2" 0.0141265 2
+"India" 1 116 "Y3" 0.021441 3
+"India" 1 116 "Y4" 0.0028709 4
+"India" 1 116 "Y5" 0.0014207 5
+"Myanmar" 0 117 "Y1" 0.0137132 1
+"Myanmar" 0 117 "Y2" 0.0145409 2
+"Myanmar" 0 117 "Y3" 0.0324745 3
+"Myanmar" 0 117 "Y4" 0.0049492 4
+"Myanmar" 0 117 "Y5" 0.0030841 5
+"Cambodia" 0 118 "Y1" 0.0143337 1
+"Cambodia" 0 118 "Y2" 0.0109002 2
+"Cambodia" 0 118 "Y3" 0.0120935 3
+"Cambodia" 0 118 "Y4" 0.0054688 4
+"Cambodia" 0 118 "Y5" 0.0011976 5
+"Laos" 0 119 "Y1" 0.0065924 1
+"Laos" 0 119 "Y2" 0.0088447 2
+"Laos" 0 119 "Y3" 0.0040826 3
+"Laos" 0 119 "Y4" 0.0017058 4
+"Laos" 0 119 "Y5" 0.0020167 5
+"Vietnam" 0 120 "Y1" 0.0021588 1
+"Vietnam" 0 120 "Y2" 0.0049776 2
+"Vietnam" 0 120 "Y3" 0.0046127 3
+"Vietnam" 0 120 "Y4" 0.0013051 4
+"Vietnam" 0 120 "Y5" 0.0006689 5
+"Vietnam South" 0 121 "Y1" 0.0047307 1
+"Malaysia" 0 122 "Y1" 0.0014455 1
+"Malaysia" 0 122 "Y2" 0.0011858 2
+"Malaysia" 0 122 "Y3" 0.0020185 3
+"Malaysia" 0 122 "Y4" 0.000663 4
+"Malaysia" 0 122 "Y5" 0.0006673 5
+"Singapore" 0 123 "Y1" 0.0007389 1
+"Singapore" 0 123 "Y2" 0.0010387 2
+"Singapore" 0 123 "Y3" 0.0009548 3
+"Singapore" 0 123 "Y4" 0.0005321 4
+"Singapore" 0 123 "Y5" 0.0004292 5
+"Brunei" 0 124 "Y1" 0.0009723 1
+"Brunei" 0 124 "Y2" 0.0011261 2
+"Brunei" 0 124 "Y3" 0.0014181 3
+"Brunei" 0 124 "Y4" 0.0009667 4
+"Brunei" 0 124 "Y5" 0.0008851 5
+"East Timor" 1 125 "Y4" 0.0024424 4
+"East Timor" 1 125 "Y5" 0.002116 5
+"Australia" 1 126 "Y1" 0.0013951 1
+"Australia" 1 126 "Y2" 0.0011024 2
+"Australia" 1 126 "Y3" 0.0015261 3
+"Australia" 1 126 "Y4" 0.0013111 4
+"Australia" 1 126 "Y5" 0.0007908 5
+"Papua New Guinea" 1 127 "Y1" 0.007031 1
+"Papua New Guinea" 1 127 "Y2" 0.0074238 2
+"Papua New Guinea" 1 127 "Y3" 0.0107935 3
+"Papua New Guinea" 1 127 "Y4" 0.0041112 4
+"Papua New Guinea" 1 127 "Y5" 0.005018 5
+"New Zealand" 1 128 "Y1" 0.0013004 1
+"New Zealand" 1 128 "Y2" 0.001241 2
+"New Zealand" 1 128 "Y3" 0.0019639 3
+"New Zealand" 1 128 "Y4" 0.0014153 4
+"New Zealand" 1 128 "Y5" 0.000907 5
+"Vanuatu" 1 129 "Y2" 0.0026504 2
+"Vanuatu" 1 129 "Y3" 0.0026888 3
+"Vanuatu" 1 129 "Y4" 0.0010709 4
+"Vanuatu" 1 129 "Y5" 0.0011469 5
+"Solomon Islands" 1 130 "Y1" 0.0030463 1
+"Solomon Islands" 1 130 "Y2" 0.0037376 2
+"Solomon Islands" 1 130 "Y3" 0.0028068 3
+"Solomon Islands" 1 130 "Y4" 0.0015706 4
+"Solomon Islands" 1 130 "Y5" 0.0012408 5
+"Kiribati" 1 131 "Y1" 0.0019673 1
+"Kiribati" 1 131 "Y2" 0.0043522 2
+"Kiribati" 1 131 "Y3" 0.002754 3
+"Kiribati" 1 131 "Y4" 0.0011925 4
+"Kiribati" 1 131 "Y5" 0.0010832 5
+"Tuvalu" 1 132 "Y1" 0.0004988 1
+"Tuvalu" 1 132 "Y2" 0.0015782 2
+"Tuvalu" 1 132 "Y3" 0.0009943 3
+"Tuvalu" 1 132 "Y4" 0.0007534 4
+"Tuvalu" 1 132 "Y5" 0.0011469 5
+"Fiji" 0 133 "Y1" 0.0014846 1
+"Fiji" 0 133 "Y2" 0.0207247 2
+"Fiji" 0 133 "Y3" 0.0216968 3
+"Fiji" 0 133 "Y4" 0.0077442 4
+"Fiji" 0 133 "Y5" 0.0035516 5
+"Tonga" 0 134 "Y1" 0.0006719 1
+"Tonga" 0 134 "Y2" 0.0018289 2
+"Tonga" 0 134 "Y3" 0.0020808 3
+"Tonga" 0 134 "Y4" 0.0007227 4
+"Tonga" 0 134 "Y5" 0.0010907 5
+"Nauru" 1 135 "Y1" 0.0002725 1
+"Nauru" 1 135 "Y2" 0.0007501 2
+"Nauru" 1 135 "Y3" 0.0007832 3
+"Nauru" 1 135 "Y4" 0.0004268 4
+"Nauru" 1 135 "Y5" 0.0021355 5
+"Marshall Islands" 1 136 "Y1" 0.0008859 1
+"Marshall Islands" 1 136 "Y2" 0.0021619 2
+"Marshall Islands" 1 136 "Y3" 0.0024967 3
+"Marshall Islands" 1 136 "Y4" 0.0008484 4
+"Marshall Islands" 1 136 "Y5" 0.0009725 5
+"Palau" 1 137 "Y2" 0.0024576 2
+"Palau" 1 137 "Y3" 0.0018072 3
+"Palau" 1 137 "Y4" 0.0006108 4
+"Palau" 1 137 "Y5" 0.0006016 5
+"Micronesia" 1 138 "Y1" 0.0010291 1
+"Micronesia" 1 138 "Y2" 0.0039047 2
+"Micronesia" 1 138 "Y3" 0.0030161 3
+"Micronesia" 1 138 "Y4" 0.0016187 4
+"Micronesia" 1 138 "Y5" 0.0009088 5
+"Samoa" 1 139 "Y1" 0.0016843 1
+"Samoa" 1 139 "Y2" 0.0020546 2
+"Samoa" 1 139 "Y3" 0.0023191 3
+"Samoa" 1 139 "Y4" 0.0007222 4
+"Samoa" 1 139 "Y5" 0.0006461 5

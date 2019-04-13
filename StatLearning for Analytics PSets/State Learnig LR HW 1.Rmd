@@ -1,0 +1,466 @@
+---
+title: "Statistical Learning HW 1"
+author: "Christian Conroy"
+date: "February 10, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+require(knitr)
+require(ISLR)
+require(SmartEDA)
+require(MASS)
+
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics")
+```
+
+# 1. (3 pts) Textbook #3.7.3
+
+3. Suppose we have a data set with five predictors, X1 = GPA, X2 = IQ,
+X3 = Gender (1 for Female and 0 for Male), X4 = Interaction between
+GPA and IQ, and X5 = Interaction between GPA and Gender. The
+response is starting salary after graduation (in thousands of dollars).
+Suppose we use least squares to fit the model, and get ??^0 = 50, ??^1 =
+20, ??^2 = 0.07, ??^3 = 35, ??^4 = 0.01, ??^5 = ???10.
+
+(a) Which answer is correct, and why?
+
+i. For a fixed value of IQ and GPA, males earn more on average
+than females.
+ii. For a fixed value of IQ and GPA, females earn more on
+average than males.
+iii. For a fixed value of IQ and GPA, males earn more on average
+than females provided that the GPA is high enough.
+iv. For a fixed value of IQ and GPA, females earn more on
+average than males provided that the GPA is high enough.
+
+iii is the correct answer. For a fixed value of IQ and GPA, males earn more on average
+than females provided that the GPA is high enough. When IQ and GPA are fixed, then the difference between males and females is demonstrated by B3 + B5. While B3 indicates that females earn more on average than males at a theoretical GPA of 0, the negative coefficient on B5 indicates that females on average will only earn more on average than males at lower GPAs but that males will earn more on average than females as the GPA surpassesapproximately 3.5. 
+
+(b) Predict the salary of a female with IQ of 110 and a GPA of 4.0.
+
+```{r message = FALSE}
+50 + (20*4) + (.07*110) + (35*1) + (.01*4*110) + (-10*1*4)
+```
+
+The predicted salary of a female with IQ of 110 and a GPA of 4.0 is $137,000. 
+
+(c) True or false: Since the coefficient for the GPA/IQ interaction
+term is very small, there is very little evidence of an interaction
+effect. Justify your answer.
+
+False. While the coefficient may indicate that the magnitude of the GPA/IQ interaction term is small, we would need to examine the hypothesis test with a null that B4 = 0 to determine whether there is evidence of an interaction effect. Specifically, we can examine whether the p-value is lower than 0.05 (95% confidence level) or potentially .10 (90% confidence level) depending on what threshold we apply. This is the same as observing whether the t statistic falls outside of the critical value in absolute value terms. This is all to say that we can only determine if there is evidence of an interaction effect by assessing whether the coefficient is statistically significant. 
+
+# 2. (3 pts) Textbook #3.7.8
+
+8. This question involves the use of simple linear regression on the Auto
+data set.
+
+(a) Use the lm() function to perform a simple linear regression with
+mpg as the response and horsepower as the predictor. Use the
+summary() function to print the results. 
+
+```{r message = FALSE}
+data("Auto")
+head(Auto)
+```
+
+
+```{r message = FALSE}
+reg1 <- lm(mpg ~ horsepower, data = Auto)
+summary(reg1)
+```
+
+Comment on the output.
+For example:
+122 3. Linear Regression
+i. Is there a relationship between the predictor and the response?
+
+According to the results of our regression analysis, there appears to be a relationship between the predictor and the response. The coefficient of -0.15785 indicates a negative relationship between horsepower and mpg and the low p-value indicates that the coefficient is statistically significant at the 99% confidence level. However, it is important to note that this is only a univariate regression model and it therefore may suffer from endogeneity. We can conclude a correlation but we cannot conclude causation. 
+
+ii. How strong is the relationship between the predictor and
+the response?
+
+The magnitude is fairly small, indicating that a unit increase in horsepower only slightly impacts the mpg of the vehicle. It would take much larger changes in the horsepower to have any larger magnitude effect. Again, according to the model, this is a statistically significant effect. 
+
+
+iii. Is the relationship between the predictor and the response
+positive or negative?
+
+The relationship between the predictor and the response variable is negative. 
+
+iv. What is the predicted mpg associated with a horsepower of
+98? What are the associated 95 % confidence and prediction
+intervals?
+
+```{r message = FALSE}
+
+confint(reg1)
+predict(reg1, data.frame(horsepower=98), interval="predict") 
+
+```
+
+
+The predicted mpg associated with a horsepower of 98 is 24.5 with a prediction interval of 14.8 to 34.1. The 95% confidence interval for the horsepower coefificent is -0.171 to -0.145. 
+
+
+(b) Plot the response and the predictor. Use the abline() function
+to display the least squares regression line.
+
+```{r echo = FALSE}
+
+plot(Auto$horsepower,Auto$mpg, xlab = "Horsepower", ylab = "MPG")
+abline(a = coef(reg1)[1], b = coef(reg1)[2], col = 2)
+
+```
+
+(c) Use the plot() function to produce diagnostic plots of the least
+squares regression fit. Comment on any problems you see with
+the fit.
+
+
+```{r}
+plot(reg1)
+```
+
+The residuals vs fitted plot tells us that we might want to exercise caution in using a linear model. It appears that there might be a non-linear relationship between the predictor and outcome variable. While the qq-plot shows that the residuals slightly deviate from normal distribution, the deviation does not appear to be significant enough to merit major concern. The scale-location plot may lead us to believe that there is a small heteroskedasticity risk, and so it might be worth it to use robust standard errors just in case (this is always a good practice anyways). You cannot see a Cook's distance line on the final residuals vs leverage plot because all cases are within the Cook's distance lines. Therefore, even if some values might appear to look like outliers, they do not seem to have a major effect on the regression output. 
+
+# 3. (3 pts) Textbook #3.7.10abc
+
+10. This question should be answered using the Carseats data set.
+
+```{r message = FALSE}
+data("Carseats")
+head(Carseats)
+```
+
+(a) Fit a multiple regression model to predict Sales using Price,
+Urban, and US.
+
+```{r message = FALSE}
+reg2 <- lm(Sales ~ Price + Urban + US, data = Carseats)
+summary(reg2)
+```
+
+(b) Provide an interpretation of each coefficient in the model. Be
+careful-some of the variables in the model are qualitative!
+
+B0: The average sales for stores in rural locations outside of the US not taking price into account is 13.04 thousand dollars. This theoretically means assuming price is 0, but since price will not be 0, the main purpose of the intercept here is to anchor the regression line in the right place. 
+B1: Holding all other variables in the model constant, a one unit increase in the price is associated with a decrease of .05 thousand ($50) in sales. 
+B2. Holding all other variables in the model constant, a store located in an urban location will have .02 thousand ($20) less in sales on average compared to a store in a rural location.
+B3. Holding all other variables in the model constant, a store located in the US will have 1.26 thousand ($1,260) less in sales on average compared to a store in outside of the US.
+
+(c) Write out the model in equation form, being careful to handle
+the qualitative variables properly.
+
+$y_hat = \beta_0 + \beta_1 Price + \beta_2 Urban(Yes = 1) + \beta_3 US (Yes = 1)$
+
+# 3. (3 pts) Textbook #3.7.15ab
+
+15. This problem involves the Boston data set, which we saw in the lab
+for this chapter. We will now try to predict per capita crime rate
+using the other variables in this data set. In other words, per capita
+crime rate is the response, and the other variables are the predictors.
+
+```{r message = FALSE}
+data("Boston")
+head(Boston)
+```
+
+
+(a) For each predictor, fit a simple linear regression model to predict
+the response. Describe your results. In which of the models is
+there a statistically significant association between the predictor
+and the response? 
+
+```{r message = FALSE}
+varlist <- names(Boston)[-1]
+
+lm.test <- vector("list", length(varlist))
+
+for(i in seq_along(varlist)){
+    lm.test[[i]] <- lm(reformulate(varlist[i], "crim"), data = Boston)
+}
+
+lapply(lm.test, summary)
+```
+
+If we run a simple linear regression of crim on each respective variable in the model as covariates, we find a statistically significant effect for every covariate except for chas, the Charles River dummy variable signifying if the tract bounds the river. 
+
+Create some plots to back up your assertions.
+
+```{r echo = FALSE}
+# Plot for zn
+plot(Boston$rm,Boston$crim, xlab = "Avg. number of rooms per dwelling", ylab = "Per Capita Crime Rate")
+abline(a = coef(lm.test[[5]])[1], b = coef(lm.test[[5]])[2], col = 2)
+```
+
+As the above plot for the relationship between, most of the univariate regression models show statistically significant relationships that are spurious and misleading. The conclusions above therefore do little to provide evidence related to any relationship to per capita crime rates. 
+
+
+```{r echo = FALSE}
+# Plot for dis (Not linear)
+plot(Boston$dis,Boston$crim, xlab = "Weighted Mean of Distances of Five Boston employmebt centers", ylab = "Per Capita Crime Rate")
+abline(a = coef(lm.test[[7]])[1], b = coef(lm.test[[7]])[2], col = 2)
+
+plot(lm.test[[7]])
+```
+
+As the above plot shows, not only is it insufficient to conclude that a statistically significant relationship between the dis variable and per capita crime rates is enough, but it is also wrong to conclude that a linear model is necessarily the best fit. Other plots like the residuals vs fitted also indicate as much. 
+
+(b) Fit a multiple regression model to predict the response using
+all of the predictors. Describe your results. For which predictors
+can we reject the null hypothesis H0 : ??j = 0?
+
+```{r echo = FALSE}
+reg3 <- lm(crim ~ zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + black + lstat + medv, data = Boston)
+summary(reg3)
+
+```
+
+At the 95% level of confidence, we can reject the null hypothesis for zn, dis, rad, black, and medv. IF we extend to a 90% level of confidence, we'd also reject the null for lstat and nox. 
+
+# Extra#10
+
+Consider the built-in data set cars (see problem 1). Fit a linear regression model to the data. What are
+the three observations with the largest standardized residuals (in magnitude)? What are their leverages?
+Where are the three observation with the largest leverage? What are their standardized residuals? Use the R
+function influence.lm.
+
+```{r message = FALSE}
+data("cars")
+head(cars)
+```
+
+```{r message = FALSE}
+# Run the reg and get top three observations by standardized residual 
+reg4 <- lm(dist ~ speed, data = cars)
+diagnostics <- lm.influence(reg4)
+head(sort(diagnostics$wt.res, decreasing=TRUE), 3)
+
+# Get leverage for three observations with highest standardized residual 
+diagnostics$hat[c(49, 23, 35)]
+
+# Get top three observations by largest leverage
+head(sort(diagnostics$hat, decreasing=TRUE), 3)
+
+# Get standardized residuals for three observationss with highest leverage. 
+diagnostics$wt.res[c(1, 2, 50)]
+
+```
+
+The three observations with the largest standardized residuals are observations 49, 23, and 35 with standardized residuals of 43.2, 42.5, and 30.8, respectively. Observation 49 has a leverage of 0.0740, obervation 23 a leverage of 0.0214, and observation 35 a leverage of 0.0249. The three observations with the largest leverage are observations 1, 2, and 50 with leverages of 0.1149, 0.1149, and 0.0873, respectively.The standardized residuals for observations 1, 2, and 50 are 3.85, 11.85, and 4.27, respectively.
+
+# 6. (5 pts) Textbook #3.7.9
+
+9. This question involves the use of multiple linear regression on the
+Auto data set.
+
+```{r message = FALSE}
+data("Auto")
+head(Auto)
+```
+
+(a) Produce a scatterplot matrix which includes all of the variables
+in the data set.
+
+```{r echo = FALSE}
+pairs(Auto)
+```
+pairs(Auto)
+
+(b) Compute the matrix of correlations between the variables using
+the function cor(). You will need to exclude the name variable, cor() which is qualitative.
+
+```{r message = FALSE}
+cor(Auto[,-9])
+```
+
+(c) Use the lm() function to perform a multiple linear regression
+with mpg as the response and all other variables except name as
+the predictors. Use the summary() function to print the results.
+Comment on the output. For instance:
+
+```{r message = FALSE}
+reg5 <- lm(mpg ~ cylinders + displacement + horsepower + weight + acceleration + year + origin, data = Auto)
+summary(reg5)
+```
+
+i. Is there a relationship between the predictors and the response?
+ii. Which predictors appear to have a statistically significant
+relationship to the response?
+
+There appears to be statistically significant relationships between displacement, weight, year, and origin. The relationship for displacement and weight are negative and the relationship for year and origin are positive. 
+
+iii. What does the coefficient for the year variable suggest?
+
+The coefficient on the year variable suggests that each additional model year for a car is associated with a .751 increase in mpg. 
+
+(d) Use the plot() function to produce diagnostic plots of the linear
+regression fit. Comment on any problems you see with the fit.
+Do the residual plots suggest any unusually large outliers? Does
+the leverage plot identify any observations with unusually high
+leverage?
+
+```{r echo = FALSE}
+plot(reg5)
+```
+
+The residuals vs fitted plot shows a slight dip in the middle of the plot, but the degree is not large enough for us to confidently concluse that a non-linear fit would be best. The QQ Plot gives us a little concern in terms of whether residuals are normally distributed, especially regarding observations 323, 327, and 326. The scale-location plot seems to indicate the the assumption of homoskedasticity is met. The residuals vs leverage plot indicates that we might want to double check how coefficients change with and without observation 14.
+
+(e) Use the * and : symbols to fit linear regression models with interaction effects. Do any interactions appear to be statistically significant?
+
+```{r message = FALSE}
+reg6 <- lm(mpg ~ cylinders + displacement + horsepower + weight + acceleration + year + origin + horsepower*weight + cylinders*weight + acceleration*horsepower + acceleration*weight + origin*displacement + year*horsepower, data = Auto)
+summary(reg6)
+```
+
+In throwing a few interaction terms into the model, it looks like we have statistical significance for the interaction term of cyliners and weight, horsepower and accleration, and horsepower and year. Displacement and origin can be considered statistically significant at the 90% confidence level as well. The year is probably an important variable because it meant that different emissions reduction standards that could affect GDP were interacting with the effect of variables like horsepower.  
+
+(f) Try a few different transformations of the variables, such as
+log(X), ???X, X2. Comment on your findings.
+
+```{r message = FALSE}
+reg7 <- lm(mpg ~ cylinders + log(displacement) + log(horsepower) + log(weight) + log(acceleration) + year + origin, data = Auto)
+summary(reg7)
+
+reg8 <- lm(mpg ~ cylinders + displacement + horsepower + weight + acceleration + year + origin + sqrt(horsepower) + sqrt(acceleration), data = Auto)
+summary(reg8)
+
+reg9 <- lm(mpg ~ cylinders + displacement + horsepower + weight + acceleration + year + origin + I(horsepower^2) + I(acceleration^2), data = Auto)
+summary(reg9)
+```
+
+For the log transformation, we can now say, for example, that a 1% change in weight is associated with a decrease of 12.1 for mpg or a 1% change in horsepower is associated with a 7.12 decline in mpg. This might be a more useful interpretation and given statistical significance, we can conclude that linear modeling may not be the best here. The results of the square root and squared models confirm that suspicion, with the suqare root and squared terms for horsepower demonstrating statistical significance, for example. 
+
+# Extra #14
+
+Problem 14
+a) Simulate a time series X of length N = 100 from the above formula, using the lag k = 1, coefficients ??0 = 1 and ??1 = ???0.5 and error terms t ??? N(0, 0.2 2 ). The formula tells you how to make Xt for t ??? k + 1. Choose X1 arbitrarily. Plot X as a vector. Convert X into a timeseries object with the function as.ts() and plot it again. Describe the plot.
+
+```{r message = FALSE}
+
+true_beta_0 = 1
+true_beta_1 = -0.5
+
+df <- data.frame(time=1:100, x1=50)
+
+for(i in 2:100){
+    df$x2[i] <-  true_beta_0 + true_beta_1*df$x1[[i-1]] + rnorm(1,0,0.2^2)
+}
+
+
+plot(df$x2)
+
+```
+
+```{r message = FALSE}
+
+df$x2 <- as.ts(df$x2)
+
+plot(df$time,df$x2, xlab = "Time", ylab = "X")
+lines(df$time,df$x2)
+
+```
+
+There is significant time-to-time volatility demonstrated in the plot, with particularly exteeme values around t = 17, t = 57, t = 60, t = 62, and t = 84.
+
+b) Repeat part a) with ??0 = 1, ??1 = +0.5. How does the plot change?
+
+```{r message = FALSE}
+
+true_beta_0 = 1
+true_beta_1 = 0.5
+
+df <- data.frame(time=1:100, x1=50)
+
+for(i in 2:100){
+    df$x2[i] <-  true_beta_0 + true_beta_1*df$x1[[i-1]] + rnorm(1,0,0.2^2)
+}
+
+df$x2 <- as.ts(df$x2)
+plot(df$time,df$x2, xlab = "Time", ylab = "X")
+lines(df$time,df$x2)
+
+```
+
+While there are still some extreme values (t = 21 for example), there appears to be less volatility compared to the the previous plot and some values are flipped despite the original x before simulating the time series being the same. 
+
+c) Repeat part a) with ??0 = 1, ??1 = ???0.9. How does the plot change?
+
+```{r message = FALSE}
+
+true_beta_0 = 1
+true_beta_1 = -0.9
+
+df <- data.frame(time=1:100, x1=50)
+
+for(i in 2:100){
+    df$x2[i] <-  true_beta_0 + true_beta_1*df$x1[[i-1]] + rnorm(1,0,0.2^2)
+}
+
+df$x2 <- as.ts(df$x2)
+plot(df$time,df$x2, xlab = "Time", ylab = "X")
+lines(df$time,df$x2)
+
+```
+
+Perhaps because beta 1 is negative again in this example, the plot looks much more like the first time series plot. There are more extreme values due to the Beta 1 being higher in absolute value terms in this example compared to the original example. 
+
+# Extra #15
+
+Simulate a time series X as in the previous problem (N = 100 observations, lag k = 1, ??0 = 1, ??1 = ???0.5, t ???
+N(0, 0.2^2).
+
+a) Make a scatterplot of Xt against xt???1 for t = 2, . . . , N and describe it.
+
+```{r message = FALSE}
+
+true_beta_0 = 1
+
+true_beta_1 = 0.5
+
+df <- data.frame(time=1:100, x1=50)
+
+for(i in 2:100){
+    df$x2[i] <-  true_beta_0 + true_beta_1*df$x1[[i-1]] + rnorm(1,0,0.2^2)
+}
+
+for(i in 2:100){
+    df$x3[i] <-  true_beta_0 + true_beta_1*df$x2[[i-1]] + rnorm(1,0,0.2^2)
+}
+
+plot(df$x2,df$x3, xlab = "Xt", ylab = "X(t-1)")
+
+```
+There is no clear discernible pattern in the plot. Because we are using a beta 1 of 0.5, there is a proportional halving on each new lag and thus there is a fairly consistent relationship between each value for x(t) and for x(t-1). 
+
+
+b) Create a data frame of N ??? 1 observations and 2 columns that contains (Xt???1, Xt) in row t. Use this to fit a linear model to predict Xt from xXt???1. Compare the estimated coefficients to the ??i. Also compare the residual standard error to the standard deviation of thet. Summarize your results and observations.
+
+```{r message = FALSE}
+
+true_beta_0 = 1
+
+true_beta_1 = 0.5
+
+df <- data.frame(time=1:100, x1=50)
+
+for(i in 2:100){
+    df$x2[i] <-  true_beta_0 + true_beta_1*df$x1[[i-1]] + rnorm(1,0,0.2^2)
+}
+
+for(i in 2:100){
+    df$x3[i] <-  true_beta_0 + true_beta_1*df$x2[[i-1]] + rnorm(1,0,0.2^2)
+}
+
+reg10 <- lm(x2 ~ x3, data = df)
+summary(reg10)
+
+```
+
+A unit increase in x(t-1) is associated with a 0.097 decrease in x(t). It is interesting that this is not statistically significant, but they may be simply because of the small sample size and impact of the random error. 

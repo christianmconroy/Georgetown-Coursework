@@ -1,0 +1,51 @@
+Rank,State,Total sq miles,State,Land sq miles,State,Water sq miles
+1,Alaska,656424.00,Alaska,570374.00,Alaska,86051.00
+2,Texas,268601.00,Texas,261914.00,Michigan,40001.00
+3,California,163707.00,California,155973.00,Wisconsin,11190.00
+4,Montana,147046.00,Montana,145556.00,Louisiana,8277.00
+5,New Mexico,121598.00,New Mexico,121365.00,California,7734.00
+6,Arizona,114006.00,Arizona,113642.00,Minnesota,7326.00
+7,Nevada,110567.00,Nevada,109806.00,New York,7251.00
+8,Colorado,104100.00,Colorado,103730.00,Texas,6687.00
+9,Oregon,98386.00,Wyoming,97105.00,Florida,5991.00
+10,Wyoming,97818.00,Oregon,96003.00,Washington,4721.00
+11,Michigan,96810.00,Idaho,82751.00,Maine,4523.00
+12,Minnesota,86943.00,Utah,82168.00,North Carolina,3954.00
+13,Utah,84904.00,Kansas,81823.00,Ohio,3875.00
+14,Idaho,83574.00,Minnesota,79617.00,Virginia,3171.00
+15,Kansas,82282.00,Nebraska,76878.00,Utah,2736.00
+16,Nebraska,77358.00,South Dakota,75898.00,Massachusetts,2717.00
+17,South Dakota,77121.00,North Dakota,68994.00,Maryland,2633.00
+18,Washington,71303.00,Missouri,68898.00,Oregon,2383.00
+19,North Dakota,70704.00,Oklahoma,68679.00,Illinois,2325.00
+20,Oklahoma,69903.00,Washington,66582.00,South Carolina,1896.00
+21,Missouri,69709.00,Georgia,57919.00,North Dakota,1710.00
+22,Wisconsin,65503.00,Michigan,56809.00,Alabama,1673.00
+23,Florida,59988.00,Iowa,55875.00,Georgia,1522.00
+24,Georgia,59441.00,Illinois,55593.00,Mississippi,1520.00
+25,Illinois,57918.00,Wisconsin,54314.00,Montana,1490.00
+26,Iowa,56276.00,Florida,53997.00,New Jersey,1303.00
+27,New York,54475.00,Arkansas,52075.00,Pennsylvania,1239.00
+28,Arkansas,53182.00,Alabama,50750.00,South Dakota,1224.00
+29,North Carolina,52672.00,North Carolina,48718.00,Oklahoma,1224.00
+30,Alabama,52423.00,New York,47224.00,Arkansas,1107.00
+31,Louisiana,51843.00,Mississippi,46914.00,Tennessee,926.00
+32,Mississippi,48434.00,Pennsylvania,44820.00,Idaho,823.00
+33,Pennsylvania,46058.00,Louisiana,43566.00,Missouri,811.00
+34,Ohio,44828.00,Tennessee,41220.00,Nevada,761.00
+35,Virginia,42769.00,Ohio,40953.00,Wyoming,714.00
+36,Tennessee,42146.00,Kentucky,39732.00,Connecticut,698.00
+37,Kentucky,40411.00,Virginia,39598.00,Kentucky,679.00
+38,Indiana,36420.00,Indiana,35870.00,Indiana,550.00
+39,Maine,35387.00,Maine,30865.00,Delaware,535.00
+40,South Carolina,32007.00,South Carolina,30111.00,Rhode Island,500.00
+41,West Virginia,24231.00,West Virginia,24087.00,Nebraska,481.00
+42,Maryland,12407.00,Maryland,9775.00,Kansas,459.00
+43,Massachusetts,10555.00,Vermont,9249.00,Iowa,401.00
+44,Vermont,9615.00,New Hampshire,8969.00,New Hampshire,382.00
+45,New Hampshire,9351.00,Massachusetts,7838.00,Colorado,371.00
+46,New Jersey,8722.00,New Jersey,7419.00,Vermont,366.00
+47,Hawaii,6459.00,Hawaii,6423.00,Arizona,364.00
+48,Connecticut,5544.00,Connecticut,4845.00,New Mexico,234.00
+49,Delaware,2489.00,Delaware,1955.00,West Virginia,145.00
+50,Rhode Island,1545.00,Rhode Island,1045.00,Hawaii,36.00

@@ -1,0 +1,210 @@
+---
+title: "A04_G22630214"
+author: "Christian Conroy"
+date: "February 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE, message = FALSE, warning = FALSE}
+if (!require(car)) {
+  install.packages("car")
+  require(car)
+}
+
+if (!require(MASS)) {
+    install.packages("MASS")
+    require(MASS)
+}
+
+if (!require(olsrr)) {
+    install.packages("olsrr")
+    require(olsrr)
+}
+```
+
+```{r, include = FALSE}
+setwd("/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester4MPP/ProgrammingStats") 
+benergy <- read.csv("buildingenergy.csv", header=T)
+```
+
+## Determining Best Model for HL
+Full Regression Model for HL
+```{r}
+regHL <- lm(HL ~ RC + SA + WA + RA + OH + OR + GA + GD, data = benergy)
+summary(regHL)
+```
+
+While we may be happy with the model due to an R-squared of 0.9162, an adjusted R-squared of .9154, a high F-statisrtic of 1187, and a p-value for the model of < 2.2e-16, RA appears to be perfectly multicollinear with other variables in the model. This meakes sense as Roof Area is likely to be directly related to surface area, for example. 
+
+Regression Model for HL without RA
+```{r}
+regHL2 <- lm(HL ~ RC + SA + WA + OH + OR + GA + GD, data = benergy)
+summary(regHL2)
+```
+This model is a clear improvement from the first regression. Most variables show statistical significance at the 0.001 level. GD is statistically significant at the 0.01 level and OR is not statistically significant as made evident by a high p-value of .80550. Even though we are still content with the p-value for the entire model and the adjusted R-squared metric, we still need to assess further multicollinearity. 
+
+Test for multicollinearity using VIF
+```{r}
+vif(regHL2)
+```
+Using a threshold of 10 for an acceptable level of VIF, it is clear that we should drop RC, SA, and OH, and run the new model to eliminate the threat of multicollinearity. 
+
+Drop the multicollinear variables and run model
+```{r}
+regHL3 <- lm(HL ~ OR + GA + WA + GD, data = benergy)
+summary(regHL3)
+```
+While we lose the strength of the adjusted r-squared metric, we are now more content with the model given the reduction of the threat of multicollinearity. Our p-value is still very low, giving us confidence in the statistical significance of the model as a whole. While neither OR nor GD are statistically significant, the other variables show statistical significance at the 0.001 level. 
+
+Confirming fixing of multicollinearity problems
+```{r}
+vif(regHL3)
+```
+
+Testing whether a logged dependent variable might be appropriate
+```{r}
+hist(benergy$HL)
+hist(log(benergy$HL))
+```
+Logging HL does not appear to provide us a distribution that looks any more normal, and therefore we can be confident moving forward with the non-logged dependent variable. 
+
+Plotting the Model
+```{r}
+plot(regHL3)
+```
+The Residuals vs. fitted plot seems essentially random with some potential outliers near the top and bottom. The QQ plot does not look particularly great given outliers at the bottom and top. Though we do not want to eliminate any observations from the sample in this exercise, it could be worth it to consider eliminating those observations from the model in future iterations. The scale location plot similarily shows outlier concerns. The Residuals vs. Leverage plot seems essentially random with some potential outliers near the bottom, though it does not appear as if they fall below the Cook's Distance. Overall, the model has a fair fit and controls for multicollinearity though there are clear problems brought on bt extreme values.  
+
+Running Without Outliers
+```{r}
+benergy <- benergy[-c(573, 66, 114), ]
+regHL4 <- lm(HL ~ OR + GA + WA + GD, data = benergy)
+summary(regHL4)
+```
+
+```{r}
+fitstep <- lm(HL ~ OR + GA + WA + GD, data = benergy)
+step <- stepAIC(fitstep, direction="both")
+step$anova # display results
+```
+
+## Running the model suggested by stepwise regression analysis 
+
+```{r}
+regHL5 <- lm(HL ~ GA + WA, data = benergy)
+summary(regHL5)
+```
+
+Examining Residuals
+```{r}
+benergy$reHL <- resid(regHL5)
+summary(benergy$reHL)
+```
+The fact that the mean of the residuals is 0.000 gives us further confidence in the explanatory power of the model.
+
+## Variable selection confirmation
+```{r}
+k <- ols_all_subset(regHL5)
+k
+```
+
+## Determining Best Model for HL
+
+```{r, include = FALSE}
+setwd("/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester4MPP/ProgrammingStats") 
+benergy <- read.csv("buildingenergy.csv", header=T)
+```
+
+Full Regression Model for HL
+```{r}
+regCL <- lm(CL ~ RC + SA + WA + RA + OH + OR + GA + GD, data = benergy)
+summary(regCL)
+```
+While we may be happy with the model due to an R-squared of 0.8878, an adjusted R-squared of .8868, a high F-statisrtic of 859.1, and a p-value for the model of < 2.2e-16, RA appears to be perfectly multicollinear with other variables in the model. This meakes sense as Roof Area is likely to be directly related to surface area, for example. 
+
+Regression Model for HL without RA
+```{r}
+regCL2 <- lm(CL ~ RC + SA + WA + OH + OR + GA + GD, data = benergy)
+summary(regCL2)
+```
+
+This model is a clear improvement from the first regression. Most variables show statistical significance at the 0.001 level. GD and OR are not statistically significant as made evident by a high p-values. Even though we are still content with the p-value for the entire model and the adjusted R-squared metric, we still need to assess further multicollinearity. 
+
+Test for multicollinearity using VIF
+```{r}
+vif(regCL2)
+```
+
+Using a threshold of 10 for an acceptable level of VIF, it is clear that we should drop RC, SA, and OH, and run the new model to eliminate the threat of multicollinearity. 
+
+Drop the multicollinear variables and run model
+```{r}
+regCL3 <- lm(CL ~ OR + GA + WA + GD, data = benergy)
+summary(regCL3)
+```
+
+While we lose the strength of the adjusted r-squared metric, we are now more content with the model given the reduction of the threat of multicollinearity. Our p-value is still very low, giving us confidence in the statistical significance of the model as a whole. While neither OR nor GD are statistically significant, the other variables show statistical significance at the 0.001 level. 
+
+Confirming fixing of multicollinearity problems
+```{r}
+vif(regCL3)
+```
+
+Testing whether a logged dependent variable might be appropriate
+```{r}
+hist(benergy$CL)
+hist(log(benergy$CL))
+```
+Logging CL does not appear to provide us a distribution that looks any more normal, and therefore we can be confident moving forward with the non-logged dependent variable. 
+
+Examining Residuals
+```{r}
+benergy$reCL <- resid(regCL3)
+summary(benergy$reCL)
+```
+
+The fact that the mean of the residuals is 0.000 gives us further confidence in the explanatory power of the model. 
+
+Plotting the Final Model
+```{r}
+plot(regCL3)
+```
+
+The Residuals vs. fitted plot seems essentially random with some potential outliers near the top. The QQ plot does not look particularly great given outliers at the bottom and top. Though we do not want to eliminate any observations from the sample in this exercise, it could be worth it to consider eliminating those observations from the model in future iterations. The scale location plot similarily shows outlier concerns. The Residuals vs. Leverage plot seems essentially random with some potential outliers near the bottom, though it does not appear as if they fall below the Cook's Distance. Overall, the model has a fair fit and controls for multicollinearity though there are clear problems brought on bt extreme values.
+
+Running Without Outliers
+```{r}
+benergy <- benergy[-c(548, 20, 17, 210, 356, 596), ]
+regCL4 <- lm(CL ~ OR + GA + WA + GD, data = benergy)
+summary(regCL4)
+```
+
+```{r}
+fitstepCL <- lm(CL ~ OR + GA + WA + GD, data = benergy)
+stepCL <- stepAIC(fitstepCL, direction="both")
+stepCL$anova # display results
+```
+
+## Running the model suggested by stepwise regression analysis 
+
+```{r}
+regCL5 <- lm(CL ~ GA + WA, data = benergy)
+summary(regCL5)
+```
+
+Examining Residuals
+```{r}
+benergy$reHL <- resid(regCL5)
+summary(benergy$reCL)
+```
+The fact that the mean of the residuals is 0.000 gives us further confidence in the explanatory power of the model.
+
+## Variable selection confirmation
+```{r}
+k <- ols_all_subset(regCL5)
+k
+```
+

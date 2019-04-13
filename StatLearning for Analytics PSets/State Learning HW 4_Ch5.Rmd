@@ -1,0 +1,312 @@
+---
+title: "Statistical Learning HW 4 - Ch 5"
+author: "Christian Conroy"
+date: "March 22, 2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+require(knitr)
+require(MASS)
+require(boot)
+require(ISLR)
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics")
+```
+
+
+# Book #9 a-c (3 points)
+
+We will now consider the Boston housing data set, from the MASS
+library.
+
+```{r message = FALSE}
+data("Boston")
+```
+
+(a) Based on this data set, provide an estimate for the population mean of medv. 
+
+```{r message = FALSE}
+muhat <- mean(Boston$medv)
+muhat
+```
+
+$\hat{\mu}$ is equal to 22.5 
+
+(b) Provide an estimate of the standard error of $\hat{\mu}$. Interpret this result. Hint: We can compute the standard error of the sample mean by dividing the sample standard deviation by the square root of the number of observations.
+
+```{r message = FALSE}
+muhatse <- sd(Boston$medv)/sqrt(length(Boston$medv))
+muhatse
+```
+
+The standard error of $\hat{\mu}$ is equal to 0.409. (Make sure this shows up in RMD). This tells us how far the sample mean deviates from the actual population mean. Because the sample size is obviouly not that large, the SE is fairly high here. 
+
+(c) Now estimate the standard error of $\hat{\mu}$ using the bootstrap. How does this compare to your answer from (b)?
+
+```{r message = FALSE}
+set.seed(1)
+meanFunc <- function(x,i){mean(x[i])}
+bootMean <- boot(Boston$medv,meanFunc, 1000)
+bootMean
+
+```
+Using bootstrap, I end up with a standard rror of $\hat{\mu}$ equal to 0.412, which is higher than what I had originally calculated but pretty close. Given that the bootstrap method here is allowing us to emulate the process of obtaining new sample sets by repeatedly sampling observations from the original data set, this provides us confidence in the standard error measurement. (Might be good to ask a question about this to Keegan and Jason) 
+
+# Extra 38 (3 points)
+
+Suppose we are given a training set with n observations and want to conduct k-fold cross-validation. Assume always that n = km where m is an integer. 100 =2m -> m = 50
+
+a) Let k = 2. Explain carefully why there are 1/2 (n m) ways to partition the data into 2 folds.
+
+In the case of k-fold cross validation, the first fold is treated as a validation set, and the method is fit on the remaining k-1 folds. In this case then, there is only one way to partition the data into two folds: One half of the data is validation and the other half is the train. In the equatin above, n represents the number of things to choose from and m represents how many of them we are choosing with no repetition and order does not matter. What the equation above signifies then is all the ways that we can apportion 100 into two groups of 50. 
+
+b) Let k = 3. Explain carefully why there are n!/3!m!m!m! ways to partition the data into 3 folds.
+
+In this case, we will end up with one third of the data in validation and the other two-third split across two groups serving as the train. Like above, we are multiplying by 1/3 to signify that we are dividing into three groups. We are then using the n!/m!m!m! part to say that we have n observations of which to select (1/3*n) observations, which we do three times and hence the three factorials. 
+
+c) Guess a formula for the number of ways to partition the data into k folds for general k. Check if your
+formula gives the correct answer for k = n (leave-one-out c.v.)
+
+1/k * (n!/k(m!^k))
+
+# Extra 41 (3 points)
+
+Consider the built-in data set cars (see problem 1). We wish to predict the braking distance dist from
+speed. Use leave-one-out cross validation to find the best polynomial regression model. Repeat with 10-fold cross validation. Compare the two answers.
+
+```{r message = FALSE}
+data("cars")
+```
+
+```{r message = FALSE, warning = FALSE}
+set.seed(1)
+cv.error <- rep(0,5)
+######### LOOCV
+for (i in 1:5){
+  glm.loocv <- glm(dist ~ poly(speed ,i),data=cars)
+  cv.error[i]=cv.glm(cars, glm.loocv)$delta
+}
+
+cv.error
+
+#10 Fold
+for (i in 1:5){
+  glm.kf <- glm(dist ~ poly(speed ,i),data=cars)
+  cv.error[i]=cv.glm(cars, glm.kf, K = 10)$delta
+}
+
+cv.error
+
+```
+
+For LOOCV, we see a drop from the linear to the second order polynomial but then an increase after, so we'd conclude that the quadratic is likely the best model. For k-fold cross 10, by contrast, we end up with a drop through the fourth polynormial, leading us to believe that the fourth polynomial will be appropriate. Depending on how large the errors are, it may be appropriate however to select a lower polynomial from the K-fold conclusion, meaning that we'd likely reach a similar conclusion as to what we reached with LOOCV, namely that the second polynomial is appropriate. 
+
+# Book 5 (5 points)
+5. In Chapter 4, we used logistic regression to predict the probability of default using income and balance on the Default data set. We will now estimate the test error of this logistic regression model using the
+validation set approach. Do not forget to set a random seed before beginning your analysis.
+
+```{r message = FALSE}
+data("Default")
+```
+
+(a) Fit a logistic regression model that uses income and balance to predict default.
+
+```{r message = FALSE}
+logreg <- glm(default ~ income, data = Default, family=binomial)
+```
+
+
+(b) Using the validation set approach, estimate the test error of this model. In order to do this, you must perform the following steps:
+
+i. Split the sample set into a training set and a validation set.
+
+```{r message = FALSE}
+table(Default$default)
+# We have 333 Yes and 9667 No, so it looks to be a classic class imbalance problem. Because of class imblance problem, we attempt to generate a more balanced class dataset first before creating our train and test by dropping all of the Nos down to same as number of Yesea
+
+Default_balanced <- tail(Default[order(Default$default),], -(9667-333))
+table(Default_balanced$default)
+
+# While 80-20 is usually standard, given that we're now working with less data, move it to 70-30 here. 
+set.seed(1)
+train <- sample(nrow(Default_balanced),(nrow(Default_balanced) * .70))
+
+# Flaw obviously here is that I go from  10000 to 666 observations
+
+```
+
+ii. Fit a multiple logistic regression model using only the training observations.
+
+```{r message = FALSE}
+lr.fit <- glm(default ~ income, data= Default_balanced, family=binomial, subset=train)
+```
+
+iii. Obtain a prediction of default status for each individual in the validation set by computing the posterior probability of default for that individual, and classifying the individual to the default category if the posterior probability is greater than 0.5.
+
+```{r message = FALSE}
+Default_test <- Default_balanced[-train,]
+Default_test$pred <- predict(lr.fit, Default_test, type = "response")
+Default_test$class_pred <- predict(lr.fit, Default_test, type = "response") > .5
+
+summary(Default_test$pred)
+
+# Figure out why this may not be working!
+```
+
+iv. Compute the validation set error, which is the fraction of the observations in the validation set that are misclassified.
+
+```{r message = FALSE}
+sum(Default_test$class_pred == as.numeric(Default_test$default)) / nrow(Default_test)
+
+```
+The test error accuracy is at 20.5%. 
+
+(c) Repeat the process in (b) three times, using three different splits of the observations into a training set and a validation set. Comment on the results obtained.
+
+```{r message = FALSE}
+set.seed(17)
+train <- sample(nrow(Default_balanced),(nrow(Default_balanced) * .80))
+
+Default_test <- Default_balanced[-train,]
+Default_test$pred <- predict(lr.fit, Default_test, type = "response")
+Default_test$class_pred <- predict(lr.fit, Default_test, type = "response") > .5
+
+sum(Default_test$class_pred == as.numeric(Default_test$default)) / nrow(Default_test)
+
+```
+The test error is at 28.4%
+
+```{r message = FALSE}
+set.seed(246)
+train <- sample(nrow(Default_balanced),(nrow(Default_balanced) * .80))
+
+Default_test <- Default_balanced[-train,]
+Default_test$pred <- predict(lr.fit, Default_test, type = "response")
+Default_test$class_pred <- predict(lr.fit, Default_test, type = "response") > .5
+
+sum(Default_test$class_pred == as.numeric(Default_test$default)) / nrow(Default_test)
+
+```
+The test error is at 22.4%
+
+
+```{r message = FALSE}
+set.seed(349)
+train <- sample(nrow(Default_balanced),(nrow(Default_balanced) * .80))
+
+Default_test <- Default_balanced[-train,]
+Default_test$pred <- predict(lr.fit, Default_test, type = "response")
+Default_test$class_pred <- predict(lr.fit, Default_test, type = "response") > .5
+
+sum(Default_test$class_pred == as.numeric(Default_test$default)) / nrow(Default_test)
+
+```
+The test error is at 29.1%
+
+(d) Now consider a logistic regression model that predicts the probability of default using income, balance, and a dummy variable for student. Estimate the test error for this model using the validation set approach. Comment on whether or not including a dummy
+
+```{r message = FALSE}
+lr.fit2 <- glm(default ~ income + balance + student, data= Default_balanced, family=binomial, subset=train)
+```
+
+```{r message = FALSE}
+Default_test <- Default_balanced[-train,]
+Default_test$pred <- predict(lr.fit2, Default_test, type = "response")
+Default_test$class_pred <- predict(lr.fit2, Default_test, type = "response") > .5
+```
+
+iv. Compute the validation set error, which is the fraction of the observations in the validation set that are misclassified.
+
+```{r message = FALSE}
+
+sum(Default_test$class_pred == as.numeric(Default_test$default)) / nrow(Default_test)
+
+```
+The test error is at approximatly 9.0%
+
+# Extra 39 (5 Points)
+
+In this problem, we use the Advertising data. We want to predict Sales from TV, Radio and Newspaper, using multiple regression (no interaction terms, no polynomial terms). There are therefore three models with exactly one predictor, three with exactly two predictors, and one with all three predictors.
+
+```{r message = FALSE}
+Advertising <- read.csv('Advertising.csv', header = TRUE, stringsAsFactors = FALSE)
+head(Advertising)
+
+```
+
+a) Make all seven models. Do not show the summaries.
+
+```{r message = FALSE}
+reg1 <- lm(Sales ~ TV, data= Advertising)
+reg2 <- lm(Sales ~ Radio, data= Advertising)
+reg3 <- lm(Sales ~ Newspaper, data= Advertising)
+reg4 <- lm(Sales ~ TV + Newspaper, data= Advertising)
+reg5 <- lm(Sales ~ TV + Radio, data= Advertising)
+reg6 <- lm(Sales ~ Radio + Newspaper, data= Advertising)
+reg7 <- lm(Sales ~ TV + Radio + Newspaper, data= Advertising)
+```
+
+
+
+b) There are six ways to nest these models from smallest (only one predictor) to largest (all three predictors).
+Carry out ANOVA comparisons for all six ways.
+
+```{r message = FALSE}
+anova(reg1, reg2, reg3, reg4, reg5, reg6, reg7)
+```
+
+c) Summarize what you see. Is there a predictor that typically does not improve a model significantly if it
+is added? What are the models that are always improved significantly if another predictor is added? Is
+there anything that these models have in common?
+
+There is statistical significance for the model with TV and Newspaper as predictors and the model with all three as predictors. It does not look like newspaper typically does not improve a model significantly if it is added. In fact, the RSS is the same for the model with TV and Radio and the model with all three predictors. The model with TV improves significantly each time another predictor is added.  
+
+# Extra 40 (5 points)
+
+In this problem, we use the Advertising data. We want to predict Sales from TV, Radio and Newspaper,
+using multiple regression with all three predictors plus up to one interaction term of these three predictors,
+e.g. TV * Radio or Radio * Newspaper. Should such an interaction term be included? Which one? Try
+to answer this question by estimating the residual standard error using 10-fold cross validation for all four
+possible models.
+
+```{r message = FALSE}
+
+# TV
+set.seed(1)
+cv.error <- rep(0,2)
+for (i in 1:2){
+  lm.kf <- glm(Sales ~ poly(TV, i) + Radio + Newspaper, data= Advertising)
+  cv.error[i]=cv.glm(Advertising, lm.kf, K = 10)$delta
+}
+
+cv.error
+
+# Radio
+set.seed(1)
+cv.error <- rep(0,2)
+for (i in 1:2){
+  lm.kf <- glm(Sales ~ TV + poly(Radio, i) + Newspaper, data= Advertising)
+  cv.error[i]=cv.glm(Advertising, lm.kf, K = 10)$delta
+}
+
+cv.error
+
+# Newspaper 
+set.seed(1)
+cv.error <- rep(0,2)
+for (i in 1:2){
+  lm.kf <- glm(Sales ~ TV + Radio + poly(Newspaper, i),data= Advertising)
+  cv.error[i]=cv.glm(Advertising, lm.kf, K = 10)$delta
+}
+
+cv.error
+
+```
+
+Including an interaction term for TV would be appropriate as its inclusion decreases the residual standard error while the residual standard error increases when including an interaction term for the other two predictors respectively. 

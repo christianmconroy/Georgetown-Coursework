@@ -1,0 +1,51 @@
+---
+title: "A02b_G22630214"
+author: "Christian Conroy"
+date: "February 2, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+
+Load in the Supermarket Transactiona data:
+
+```{r, message = FALSE}
+supermarket <- read_csv("SuperMarketTransactions.csv")
+```
+
+B.a -
+All purchases made during January and February of 2008
+
+```{r}
+supermarket$`Purchase Date` <- as.character(as.Date(supermarket$`Purchase Date`, "%m/%d/%Y"))
+
+supermarket_JanFeb2008 <- subset(supermarket, `Purchase Date` >= "2008-01-01" & `Purchase Date` <= "2008-02-29") 
+
+ggplot(supermarket_JanFeb2008, aes(x= `Units Sold`)) + geom_bar(col = 'red', fill = 'green')
+
+```
+
+```{r, message=FALSE}
+ggplot(supermarket_JanFeb2008, aes(x= Revenue)) + geom_histogram(col = 'red', fill = 'green')
+```
+
+B.b  - All purchase made by married female homeowners in the state of California.
+
+```{r}
+supermarket_mfhc <- subset(supermarket, `Marital Status` == "M" & Gender == "F" & Homeowner == "Y" & `State or Province` == "CA")
+
+ggplot(supermarket_mfhc, aes(x= `Units Sold`)) + geom_bar(col = 'red', fill = 'green')
+```
+
+```{r, message=FALSE}
+ggplot(supermarket_mfhc, aes(x= Revenue)) + geom_histogram(col = 'red', fill = 'green')
+```
+
+Both subsets demonstrate fairly similar trends, with units sold centered around 4 with slight left skew. However, the first subset seems to show more concentration near the mean while the second subset shows slightly greater dispersion towards the min and max. The distributions of revenue also look very similar, with the second subset showing a slightly higher mean.
