@@ -1,0 +1,275 @@
+---
+title: "Homework #3: Submission"
+author: "Christian Conroy"
+output: html_document
+---
+# Create time objects, frequency by hours bar, line facet wraps, wordcloud
+
+In the provided `.Rmd` template, write your code and commentary. Choose two easy tasks (0.5 points per), the one medium task (1 point), and one of the hard tasks (3 points per). Delete subtasks that you did not choose to do. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(plyr)
+library(rio)
+# install.packages('wordcloud')
+library(wordcloud)
+library(rvest)
+```
+
+
+```{r, warning=FALSE}
+#Load in data
+  
+  github.url <- "https://github.com/GeorgetownMcCourt/data-science/blob/master/homework_data/"
+  file.url <- "wmata_2016to2017.csv.zip?raw=true"
+  wmata <- import(paste0(github.url, file.url))
+  
+```
+
+## (1) Warm up
+
+- Check the structure and formats of the data.
+- Create a date-time object by applying `strptime()` to a concatenation of the `date` and `time` fields. For reference, take a look at the date-time documentation ([link](https://stat.ethz.ch/R-manual/R-devel/library/base/html/strptime.html)).
+- Also set up a date object using `as.Date`.
+
+```{r}
+str(wmata)
+timedate <- strptime((paste(wmata$date, wmata$time.occur)), '%B %d, %Y %l')
+date <- as.Date(wmata$date, '%B %d, %Y')
+
+```
+
+## (2) Easy 
+
+1. _When are the peak hours for delays?_
+_Expected outcome_: A bar plot the total number of delays for each hour of the day in `time.occur`.
+
+NOT CHOOSING AS ONE OF CHOSEN TASKS FOR EASY SECTION. Challenge getting R to recognize AM/PM distinction. It was only recognizing 12PM and conflating all others for AM. 
+
+```{r, warning=FALSE, message=FALSE, echo = FALSE}
+
+wmata$hour <- format(strptime(wmata$time.occur,'%H:%M%p'),'%I%p')
+ggplot(data=wmata, aes(x=hour, y=delay)) +
+  geom_bar(stat="identity")
+```
+
+2. _Which stations are associated with the most delays?_
+_Expected outcome_: A bar plot the total number of delays for `in.station`.
+
+```{r, warning=FALSE}
+stadelays <- wmata$in.station[order(wmata$delay, decreasing = TRUE)]
+
+ggplot(data=subset(wmata, in.station %in% stadelays [1:5]), aes(x=in.station, y=delay)) + geom_bar(stat="identity") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+It looks like L'efant Plaza is associated with the most train delays, followed by Naylor Road, Prince George's Plaza, Addison Road, and Landover. 
+
+3. _Which train lines are associated with the most delays?_
+_Expected outcome_: A bar plot the total number of delays for `line`.
+
+```{r, warning=FALSE}
+linedelays <- wmata$line[order(wmata$delay, decreasing = TRUE)]
+
+ggplot(data=subset(wmata, line %in% linedelays [1:5]), aes(x=line, y=delay)) + geom_bar(stat="identity") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+It looks like the Silver line is associated with the most delays, followed by the Orange and Green lines.
+
+4. _What does the time series look like?_
+_Expected outcome_: A line plot the total number of delays for `line`.
+
+```{r}
+wmata$date2 <- as.Date(wmata$date, '%B %d, %Y')
+ggplot(wmata, aes(date2, delay)) + geom_line() + xlab("Date") + ylab("Delays") + facet_wrap(~line)
+```
+
+## (3) Medium
+
+1. _What is the relative importance of each reason for delays_?
+_Expected outcome_: Process the data into the appropriate form so that the `wordcloud` package can scale each `reason.` based on its frequency. An example wordcloud can be found [here](https://www.wordclouds.com/).
+
+Counting the reason frequency. 
+```{r}
+reasoncounts <- as.data.frame(ldply(wmata[,10:17],function(x) t(rbind(names(table(x)),table(x)))))
+reasoncounts  <- subset(reasoncounts,`1` == 1)
+reasoncounts$`1` <- NULL
+names(reasoncounts) <- c("reason", "count")
+reasoncounts$reason <- sub("reason.","", reasoncounts$reason)
+reasoncounts$count <- as.numeric(reasoncounts$count)
+```
+
+Developing the wordcloud
+```{r}
+set.seed(123)
+par(mfrow=c(2,1))
+reasoncounts <- reasoncounts[order(-reasoncounts$count),]
+wordcloud(reasoncounts$reason, reasoncounts$count, fixed.asp = TRUE, rot.per = .15, c(2,.5), FALSE)
+head(reasoncounts[order(reasoncounts$count,decreasing = TRUE), ], 5)
+```
+# Door looks to be the most important word. 
+
+## (4) Hard[er]
+1. _Which metro line has the highest chance of having a delay longer than 10 minutes? Which has the lowest chance?_
+
+Creating the function to show the Survival Curves for each line
+```{r}
+linesurvcurve <- function (line) {
+wmatasub <- wmata[wmata$line==line,]
+delbydate <- aggregate(delay ~ date2, data = wmatasub, sum)
+delbydate <- delbydate[order(delbydate$date2),]
+delbadd <- data.frame(date2=as.POSIXct(Sys.time(), origin="1970-01-01"), delay = 0)
+delbydate <- rbind(delbadd, delbydate)
+delbydate$time <- rep(0:(length(delbydate$date2)-1))
+delbydate <- subset(delbydate, delbydate$time <= 15)
+
+delbydate$diff <- sum(delbydate$delay)
+n <- nrow(delbydate)
+if (n > 1) for(i in 2:n) delbydate$diff[i] <- (delbydate$diff[i-1] - delbydate$delay[i-1])
+
+delbydate$dn <- delbydate$delay/delbydate$diff
+delbydate$dnsub1 <- 1-delbydate$dn
+
+delbydate$s <- delbydate$dnsub1[1]
+delbydate$s[2] <- delbydate$dnsub1[2]
+n <- nrow(delbydate)
+if (n > 1) for(i in 3:n) delbydate$s[i] <- prod(delbydate$dnsub1[1:i])
+
+p <- ggplot(delbydate, aes(time, s)) + geom_line() + xlab("time t") + ylab("s(probability of lasting beyond time t")
+return(p)
+}
+```
+
+Creating the function to get the highest probability at time t = 10
+```{r}
+linesprob10 <- function (line) {
+  wmatasub <- wmata[wmata$line==line,]
+  delbydate <- aggregate(delay ~ date2, data = wmatasub, sum)
+  delbydate <- delbydate[order(delbydate$date2),]
+  delbadd <- data.frame(date2=as.POSIXct(Sys.time(), origin="1970-01-01"), delay = 0)
+  delbydate <- rbind(delbadd, delbydate)
+  delbydate$time <- rep(0:(length(delbydate$date2)-1))
+  delbydate <- subset(delbydate, delbydate$time <= 15)
+  
+  delbydate$diff <- sum(delbydate$delay)
+  n <- nrow(delbydate)
+  if (n > 1) for(i in 2:n) delbydate$diff[i] <- (delbydate$diff[i-1] - delbydate$delay[i-1])
+  
+  delbydate$dn <- delbydate$delay/delbydate$diff
+  delbydate$dnsub1 <- 1-delbydate$dn
+  
+  delbydate$s <- delbydate$dnsub1[1]
+  delbydate$s[2] <- delbydate$dnsub1[2]
+  n <- nrow(delbydate)
+  if (n > 1) for(i in 3:n) delbydate$s[i] <- prod(delbydate$dnsub1[1:i])
+  
+  q <- delbydate$s[delbydate$time == 10]
+  return(q)
+}
+```
+
+Getting the max probability at time t=10
+```{r}
+max(c(linesprob10('Blue'), linesprob10('Green'), linesprob10('Orange'), linesprob10('Red'), linesprob10('Silver'), linesprob10('Yellow')))
+linesprob10('Blue')
+```
+
+The highest probability at time t = 10 is blue. 
+
+Plotting the survival curves. 
+```{r}
+linesurvcurve('Blue')
+linesurvcurve('Green')
+linesurvcurve('Orange')
+linesurvcurve('Red')
+linesurvcurve('Silver')
+linesurvcurve('Yellow')
+```
+2. _Which terms are the most important terms in the advisory text when comparing the Red Line to the Silver Line?_
+_Expected outcome_: Process the `text` field into unigrams. Remove stop words. Calculate TFIDF using Red and Silver Lines as documents. Using the `wordcloud` package, plot terms in two separate wordclouds.
+
+Organizing the data frame and cleaning up the text
+```{r, warnings=FALSE}
+List <- strsplit(wmata$text, " ")
+advisory <- data.frame(Id=rep(wmata$line, sapply(List, length)), Words=unlist(List))
+advisory <- advisory[advisory$Id == "Red" | advisory$Id == "Silver",]
+advisory <- advisory[-grep("[[:digit:]]", advisory$Words),]
+advisory$Words <- gsub("[[:punct:]]","", advisory$Words)
+advisory$Words <- gsub("[^[:graph:]]", "", advisory$Words)
+advisory$Words <- gsub("?", "", advisory$Words)
+```
+
+Removing Stop Words 
+```{r}
+#Get stopwords
+stop1 <- read_html("http://www.lextek.com/manuals/onix/stopwords1.html")
+
+stopwords <- stop1 %>% 
+  html_nodes("pre") %>%
+  html_text() 
+
+stoplist <- unlist(strsplit(stopwords,"\n"))
+stoplist <- stoplist[stoplist!="" & nchar(stoplist)>1]
+stoplist <- stoplist[4:length(stoplist)]
+
+#Remove stopwrods
+advisory <- advisory[!(advisory$Words %in% stoplist),]
+```
+
+Aggregating to get counts of number of times a word shows up and naming columns. 
+```{r}
+countsadv <- aggregate(advisory$Words, by=list(advisory$Id, advisory$Words), FUN=length)
+colnames(countsadv) <- c("line", "word","freq")
+```
+
+TFIDF Function
+```{r}
+tfidf <- function(df, count.field, term, document){
+  
+  df <- df[,c(count.field, term, document)]
+  colnames(df) <- c("count","term","doc")
+  
+  #Total frequency of terms
+  df$tot_freq <- sum(df$count)
+  
+  #Number of documents
+  df$num_docs <- length(unique(df$doc))
+  
+  #Number of documents with a given term
+  datatemp <- df[!duplicated(df[,c("doc", "term")]),]
+  num_doc_term <- aggregate(datatemp$term, 
+                            by = list(term = datatemp$term),
+                            FUN = length)
+  colnames(num_doc_term)[2] <- "num_doc_term"
+  
+  #merge
+  df <- merge(df, num_doc_term, by = "term", all.x = T)
+  
+  #compute
+  df$tfidf <- (df$count/df$tot_freq) * log(df$num_docs / df$num_doc_term)
+  df <- df[, c("count","term", "doc", "tfidf")]
+  colnames(df) <- c(count.field, term, document, "tfidf")
+  return(df)
+}
+```
+
+Apply TFIDF Function and Subsetting
+```{r}
+p2forwordc <- as.data.frame(tfidf(countsadv, count.field = "freq", term = "word", document = "line"))
+p2forwordc <- subset(p2forwordc, p2forwordc$tfidf>0)
+```
+
+Final Wordcloud and Listing of Ranked Term Importance
+```{r}
+set.seed(123)
+par(mfrow=c(2,1))
+p2forwordc <- p2forwordc[order(-p2forwordc$tfidf),]
+wordcloud(p2forwordc$word[2:100], p2forwordc$tfidf[2:100], rot.per = 0, c(1,.3))
+head(p2forwordc[order(p2forwordc$tfidf,decreasing = TRUE), ], 40)
+  
+```
+
+The most frequent term is "Grovebound" . The most frequent name apart from names and directionals of course is "suspended"

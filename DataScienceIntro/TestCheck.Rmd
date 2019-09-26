@@ -1,0 +1,38 @@
+---
+title: "TestForCheckin"
+author: "Christian Conroy"
+date: "May 6, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+setwd("/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester4MPP/DataScienceIntro")
+
+library(zoo)
+library(readr)
+library(tidyr)
+library(dplyr)
+library(Amelia)
+library(lattice)
+library(stringr)
+library(jsonlite)
+library(mitools)
+library(plm)
+library(ggplot2)
+library(directlabels)
+
+```
+
+## Importing the data
+
+First, we import the Yelp checkin data and flatten it. 
+```{r import, results="hide", warning=FALSE, message=FALSE}
+# Stream in Checkin Data
+yelp_checkin <- as.data.frame(jsonlite::stream_in(file("dataset/checkin.json")), flatten = TRUE)
+# Flatten Checkin Data 
+renquote <- function(l) if (is.list(l)) lapply(l, renquote) else enquote(l)
+yelp_checkin_flat <- as.data.frame(lapply(unlist(renquote(yelp_checkin)), eval))
+```
+
+
+
