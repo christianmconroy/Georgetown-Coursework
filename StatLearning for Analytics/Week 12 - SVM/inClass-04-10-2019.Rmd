@@ -1,0 +1,379 @@
+---
+title: "In Class 04-10-2019"
+output: html_document
+---
+
+```{r, echo = F}
+require("ISLR")
+require("MASS")
+require("e1071")
+# install.packages('scatterplot3d')
+require("scatterplot3d")
+```
+
+
+```{r,echo = F}
+set.seed(123)
+# make two linearly separated point sets 
+#
+# This generates two normally distributed point sets in the plane, 
+# each of size N, that are separated by dist
+# as a matrix x
+# together with an indicator vector  y  with entries1 and -1.
+# The function also makes a colored plot of the two sets.
+
+makelinear = function(N,dist, makeplot = T){
+  x=matrix(rnorm(4*N),2*N,2)
+  y=rep(c(-1,1),c(N,N))
+  x[y==1,]=x[y==1,] + dist
+  if(makeplot){plot(x,col=y+3,pch=19)}
+  return(list(x=x,y=y))
+}
+
+# makegrid function
+make.grid=function(x,n=75){
+  grange=apply(x,2,range)
+  x1=seq(from=grange[1,1],to=grange[2,1],length=n)
+  x2=seq(from=grange[1,2],to=grange[2,2],length=n)
+  expand.grid(X1=x1,X2=x2)
+}
+
+```
+
+
+# Separating Hyperplanes
+```{r}
+A = makelinear(100, dist = 4.5, makeplot = F)
+x = A$x
+y = A$y
+linear.data1 = data.frame(x,y=as.factor(y))
+plot(x[,1],x[,2], col = y+3)
+```
+
+These two classes of points appear to be linearly separable. So we can draw a line such that all the points of one class lie on one side of the line and all the points of the other class would be on the opposite side of the line. This line could be written as
+
+\[
+\begin{aligned}
+\beta_0 + \beta_1 X_1 + \beta_2 X_2 = 0 
+\end{aligned}
+\]
+
+Note, this form is just a slight rearrangment of the more familiar
+
+\[
+\begin{aligned}
+\beta_0 + \beta_1 X_1 + \beta_2 X_2 = 0 \\
+X_2 = - \frac{\beta_0}{\beta_2} + \frac{\beta_1}{\beta_2} X_1 \\
+y = b + mx
+\end{aligned}
+\]
+
+This separating line \(\beta_0 + \beta_1 X_1 + \beta_2 X_2 = 0\) is generalized to a separating hyperplane in higher dimensions,
+
+\[
+\begin{aligned}
+\beta_0 + \beta_1 X_1 + \beta_2 X_2  + ... \beta_K X_k = 0 
+\end{aligned}
+\]
+
+For every point \(X\) that doesn't lie exactly on this hyperplane, the  sum \(\beta_0 + \beta_1 X_1 + \beta_2 X_2  + ... \beta_K X_k\) will be either greater than or less than 0, which tells us which side of the hyperplane \(X\) lies on. We can use this to create a simple classifier for the classes of \(y\):
+
+\[
+\begin{aligned}
+y_i(\beta_0 + \beta_1 X_{i,1} + \beta_2 X_{i,2}  + ... \beta_K X_{i,k}) > 0 
+\end{aligned}
+\]
+
+So how do we determine which hyperplane is "best"? Isn't it possible there could be more than one?
+
+```{r}
+A = makelinear(100, dist = 4.5, makeplot = F)
+x = A$x
+y = A$y
+linear.data1 = data.frame(x,y=as.factor(y))
+plot(x[,1],x[,2], col = y+3)
+abline(9.8,-3,col='black',lwd=2)
+abline(3.5,-.5,col='gray',lwd=2)
+abline(10,-4,col='green',lwd=2)
+```
+
+All of these lines separate the two classes. What are the pros and cons of each? What kind of things are we looking for when devising a separating hyperplane? 
+
+# MaxMargin Classifier
+
+Two linearly separable datasets. Here, we find the MaxMargin classifier that separates the sets. For any candidate hyperplane, we calculate the distance between each training data point and that hyperplane. The distance of the closest such point is the "margin". We choose the "best" hyperplane as the one that maxizes this margin. In this way, every data point will be on the correct side of the hyperplane and will be on the correct side of the margin.
+
+```{r, fig.width=5, echo = F}
+A = makelinear(100, dist = 4.5, makeplot = F)
+x = A$x
+y = A$y
+linear.data1 = data.frame(x,y=as.factor(y))
+svm.model1 = svm(y~.,data =linear.data1,kernel="linear",cost=100,scale=FALSE)
+xgrid = make.grid(x)
+ygrid = predict(svm.model1,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2)
+points(x,col=y+3,pch=19)
+points(x[svm.model1$index,],pch=5,cex=2)
+beta=drop(t(svm.model1$coefs)%*%x[svm.model1$index,])
+beta0=svm.model1$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+```
+
+All the points are separated onto the correct side of the hyperplane and the margin. 
+
+# Support Vector Classifier
+
+What if the two classes aren't perfectly separable? We can still find a separating hyperplane that does a "good" job, and just incurs some penalty for not perfectly separating the classes. The MaxMargin classifier with this relaxation is called the Support Vector Classifier, and it parameterized by a tunable "Cost" parameter.
+
+Make two datasets with smaller separation. Use svm with two different cost functions to see the effect. It can be seen that a higher cost leads to a smller region where $y=1$ is predicted (blue region).
+
+```{r}
+par(mfrow = c(1,2))
+A = makelinear(20, dist = 2, makeplot = F)
+x = A$x
+y = A$y
+linear.data1 = data.frame(x,y=as.factor(y))
+xgrid = make.grid(x)
+# make model with cost = 1
+svm.model1 = svm(y~.,data =linear.data1,kernel="linear",cost=1,scale=FALSE)
+ygrid1 = predict(svm.model1,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid1)],pch=20,cex=.2, 
+     main = "Cost = 1")
+points(x,col=y+3,pch=19)
+points(x[svm.model1$index,],pch=5,cex=2)
+beta=drop(t(svm.model1$coefs)%*%x[svm.model1$index,])
+beta0=svm.model1$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+# make model with cost = 10
+svm.model10 = svm(y~.,data =linear.data1,kernel="linear",cost=10,scale=FALSE)
+ygrid10 = predict(svm.model10,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid10)],pch=20,cex=.2, 
+     main = "Cost = 10")
+points(x,col=y+3,pch=19)
+points(x[svm.model10$index,],pch=5,cex=2)
+beta=drop(t(svm.model10$coefs)%*%x[svm.model10$index,])
+beta0=svm.model10$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+```
+
+# Exercise
+
+Use the support vector classifier on the heart dataset. We'll focus in on the two continuous features "MaxHR" and "Oldpeak" and we'll try to predict the binary feature "AHD".
+
+############### In-Class Exercise on SVM 4/10/19 #################
+
+1. Create a scatterplot of the two continuous features and color the datapoints by the binary variable.
+
+```{r}
+heart_df <- read.csv("Heart.csv")
+head(heart_df)
+```
+
+```{r}
+## GGplot
+ggplot(heart_df, aes(x = MaxHR, y = Oldpeak, color = AHD)) + geom_point() + labs(x = "MaxHR", y = "Oldpeak") + scale_color_manual(values=c("red", "blue"))
+```
+
+2. With a linear kernel, fit a support vector classifier (use cost=10). Visualize the decision boundary, the data points and the support vectors as we have done previously. 
+
+```{r}
+heart_df <- read.csv("Heart.csv")
+heart_svm <- svm(AHD ~ MaxHR + Oldpeak, data= heart_df, kernel="linear", cost=10, scale=FALSE)
+
+xgrid = make.grid(heart_df$MaxHR)
+# make model with cost = 1
+
+ygrid1 = predict(heart_svm,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid1)],pch=20,cex=.2, 
+     main = "Cost = 1")
+#points(x,col=y+3,pch=19)
+#points(x[heart_svm$index,],pch=5,cex=2)
+beta=drop(t(heart_svm$coefs)%*%as.matrix(heart_df[,c(9, 11)][heart_svm$index,]))
+beta0=heart_svm$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+points(heart_df[,c(9, 11)][heart_svm$index,],pch=5,cex=2)
+```
+# My Try
+
+```{r}
+heart_df <- read.csv("Heart.csv")
+heart_svm <- svm(AHD ~ MaxHR + Oldpeak, data= heart_df, kernel="linear", cost=1000, scale=FALSE)
+plot(heart_df$MaxHR, heart_df$Oldpeak, col=heart_df$AHD)
+
+beta=drop(t(heart_svm$coefs)%*%as.matrix(heart_df[,c(9, 11)][heart_svm$index,]))
+beta0=heart_svm$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+points(heart_df[,c(9, 11)][heart_svm$index,],pch=5,cex=2)
+```
+3. Repeat #2 and set 'scale=TRUE'; note any differences. 
+
+# Feature Expansion
+
+Illustration of feature expansion. Make a point set in 1D and put these into classes ($y = 1$ and $y = -1$). Make a plot. clearly, this point it is not linearly separable.
+```{r}
+x = seq(-3,3,by = .2)
+y = rep(-1, length(x))
+y = rep(-1, length(x))
+y[8:22] = 1
+plot(x, rep(0,length(x)),col="red", pch = 19, ylim = c(-.5,.5))
+points(x[y==1], rep(0,sum(y==1)), col = "blue", pch = 19)
+```
+
+By including the additional artificial predictor $x^2$, we can "lift" the point set into two dimensions, and now it can be linearly separated.
+```{r}
+x2 = x^2
+plot(x, x2,col="red", pch = 19, main = "Additional predictor: x^2")
+points(x[y==1], x2[y==1], col = "blue", pch = 19)
+```
+
+This can be done in a number of different ways. For example, including $\cos x$ instead of $x^2$ works just as well. But using $x^3$ does not work.
+```{r}
+x3 = cos(x)
+plot(x, x3,col="red", pch = 19, main = "Additional predictor: cos(x)")
+points(x[y==1], x3[y==1], col = "blue", pch = 19)
+x4 = x^3
+plot(x, x4,col="red", pch = 19, main = "Additional predictor: x^3")
+points(x[y==1], x4[y==1], col = "blue", pch = 19)
+```
+
+We've seen this idea before when we were discussing generalization of linear regression. We can create new features by applying non-linear functions to our feature set. This gives us an expanded feature set that may be more ammenable to separating the classes. Now, we'll just keep in mind the concepts of margin and separability and support vectors but now in this expanded feature space. 
+
+# Support Vector Machines
+
+Instead of manually creating new non-linear features, we take advantage of the "kernel trick" which implictly compute these transformations and feature expansions for us. There's a few kinds of kernel to know about
+
+- linear kernel  \(K(x_i, x_i') = \sum_{j=1}^p x_{ij}x_{i'}j\)
+- polynomial kernel \(K(x_i, x_i') = (1 + \sum_{j=1}^p x_{ij}x_{i'}j) ^d\)
+- Gaussian kernel (Radial Basis  Function) \(K(x_i, x_i') = exp(-\gamma \sum_{j=1}^p ( x_{ij} - x_{i'j}))^2\)
+
+```{r, echo=FALSE}
+makecircle = function(N,spread, makeplot = T){
+  circ0 = runif(N)*2*pi
+  circ = matrix(c(cos(circ0),rep(0,N),sin(circ0),rep(0,N)),ncol = 2)
+  x = circ + spread*matrix(rnorm(4*N),2*N,2)
+  y=rep(c(-1,1),c(N,N))
+  if(makeplot){plot(x,col=y+3,pch=19)}
+  return(list(x=x,y=y))
+}
+```
+
+
+Circular data with a linear classifier.
+```{r, fig.width=5}
+A = makecircle(100, spread = .2, makeplot = F)
+x = A$x
+y = A$y
+circle.data1 = data.frame(x,y=as.factor(y))
+svm.model2 = svm(y~.,data = circle.data1,kernel="linear",cost=10,scale=FALSE)
+xgrid = make.grid(x)
+ygrid = predict(svm.model2,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2)
+points(x,col=y+3,pch=19)
+points(x[svm.model2$index,],pch=5,cex=2)
+ypred = predict(svm.model2)
+table(y, ypred)
+```
+
+Non-linear kernel will do much better
+
+```{r}
+svm.model3 = svm(factor(y)~.,data = circle.data1,scale=FALSE,kernel="radial",cost=20)
+xgrid = make.grid(x)
+ygrid = predict(svm.model3,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2)
+points(x,col=y+3,pch=19)
+points(x[svm.model3$index,],pch=5,cex=2)
+ypred = predict(svm.model3)
+table(y,ypred)
+```
+
+
+This model uses the default value $\gamma = .5$. A smaller $\gamma$ leads to a smoother decision boundary, a larger $\gamma$ leads to less smoothness. This is illustrated for a case where the two sets overlap somewhat.
+```{r, echo = F}
+par(mfrow = c(1,2))
+A = makecircle(40, spread = .4, makeplot = F)
+x = A$x
+y = A$y
+circle.data2 = data.frame(x,y=as.factor(y))
+svm.model4 = svm(factor(y)~.,data = circle.data2,scale=FALSE,kernel="radial",cost=5, gamma = .1)
+xgrid = make.grid(x)
+ygrid = predict(svm.model4,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2, main = "Gamma = .1")
+points(x,col=y+3,pch=19)
+points(x[svm.model4$index,],pch=5,cex=2)
+svm.model5 = svm(factor(y)~.,data = circle.data2,scale=FALSE,kernel="radial",cost=5, gamma = 5)
+xgrid = make.grid(x)
+ygrid = predict(svm.model5,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2, main = "Gamma = 5")
+points(x,col=y+3,pch=19)
+points(x[svm.model5$index,],pch=5,cex=2)
+table(y,predict(svm.model4))
+table(y,predict(svm.model5))
+
+```
+The first confusion matrix comes from $\gamma = .1$, the second one from $\gamma = 5$. Clearly there is some overfitting. 
+
+# Question
+The decision boundary is impacted by both the Cost hyperparameter and the Gamma hyperparameter. What is the function of these two hyperparameters and how do they impact the decision boundary?
+
+# Exercise
+
+Here's a toy dataset with a complex separation of classes.
+
+```{r}
+N = 200 # number of points
+
+x <- 2*runif(N)-1
+y <- 2*runif(N)-1
+class <- 2*(3*y+2*x - 12*x*y > 1)-1
+mydf2 = data.frame(x =x, y=y, class=class)
+color = rep("black",N)
+color[class > 0] <- "red"
+
+plot(y~ x, data = mydf2, col = color, lwd = 2)
+```
+
+1. Fit this data with a linear Support Vector Classifier. Visualize the resulting decision boundary.
+
+```{r}
+par(mfrow = c(1,1))
+svm.mod = svm(factor(class)~.,data = mydf2,scale=FALSE,kernel="linear",cost=10)
+xgrid = make.grid(mydf2[,1:2])
+names(xgrid) <- c("x","y")
+ygrid = predict(svm.mod,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2, main = "Cost = 10")
+points(mydf2,col=class+3,pch=19)
+points(mydf2[svm.mod$index,1:2],pch=5,cex=2)
+```
+
+2. Fit this data with a SVM using the radial kernel and cost=10. Visualize the resulting decision boundary. 
+
+3. Repeat this with Cost=1 and then with Cost=1000. What is the impact?
+
+4. Repeat with a polynomial kernel with degree 2.
+
+
+# Exercise - Image Classification
+Use the MNIST6-8 dataset that we've seen in previous weeks.
+
+1. We don't need to use all the features, find 4 or 5 features that you think might be useful for this binary classification problem. Remember, we need to pick features that have some non-zero variability, so use hist() to verify that these features might be useful. Split the data into training and test sets.
+
+2. Make a scatterplot matrix of your features and color the points according the class label. Does it seem like there might be some separability of the two classes? Are the classes linearly separable or non-linearly separable?
+
+3. Fit a Support Vector Classifier (linear) to this dataset. Compute AUC for the test data. 
+
+4. Fit a Support Vector Machine with a nonlinear kernel (perhaps radial or polynomial). Compute AUC for the test data. 
+
+5. Your non-linear kernel will probably have some hyperparameters to optimize, as well as the Cost parameter. Try several different settings of the hyperparameters. Is the AUC highly sensititive to some of these parameters and not others?
+
+6. If time permitting, add some "noise" features to your dataset: generate Gaussian noise that is completely uncorrelated with the label classes. Does the addition of 1 noise feature impact the efficacy of your classifier? How about the addition of 10? 

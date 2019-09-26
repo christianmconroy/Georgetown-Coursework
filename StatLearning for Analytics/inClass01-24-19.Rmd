@@ -1,0 +1,294 @@
+---
+title: 'Analytics 512: In-Class 1/24/19'
+output:
+  html_document: default
+  pdf_document:
+    fig_caption: yes
+---
+
+## Simple Linear Regression
+
+Here's some synthetic data that we'll use for computing a simple linear regression.
+
+```{r}
+true_beta_0 = 8
+true_beta_1 = 3.5
+
+x<-rnorm(50, 0, 5)
+y <- true_beta_1 * x + true_beta_0 + rnorm(50,0,10)
+
+df <- data.frame(X = x,Y = y)
+plot(df$X, df$Y, xlab="X", ylab="Y")
+```
+
+
+
+Let's suppose we just received this data X and Y and we want to estimate the model coefficients. How can we find the "best estimates"? We treat this as an optimization problem: For any value of the coefficents, we can compare the oberserved data and the predictions. From that comparison, we can calculate the "error" the model makes. We simply want to find the coefficients that make this error as small as possible.
+
+
+Let's write the following functions:
+```{r}
+# Given an X and the Coefficients, how can we make predictions about Y
+model_prediction <- function(X, coeffs){
+  y_hat <- coeffs[1] + X*coeffs[2]
+  return(y_hat)
+}
+
+# How far off are you given your predictions?
+prediction_error <- function(y_hat, y){
+  # The sum squared error is a good measure of model error
+ return(sum((y_hat - y)^2) )
+}
+
+```
+
+*Exercise*: 
+1. Pick a few values for $\beta_0$ and $\beta_1$, evaluate the total error with our sample data.
+2. Create a grid of values of $\beta_1$ and find the value the minimizes the error (fix $beta_0$ to be equal to 8 as you do this). Repeat for $\beta_0$ (fix $beta_1$ to be equal to 3.5 as you do this). Create a two-dimesional grid for both $beta_0$ and $beta_1$, evaluate the error, where is the point of minimum error?
+3. Bonus: visualze the error with a contour plot.
+
+
+```{r}
+
+# Evaluating error of sample data
+coeffs <- c(8, 3.5)
+y_hat <- model_prediction(x, coeffs)
+prediction_error(y_hat, y)
+
+# Create a grid of values of B1
+beta1s <- data.frame(B0 = c(8, 8, 8, 8, 8, 8), B1 = c(3.5, 3.7, 3.9, 4.1, 4.3, 4.5))
+# beta1s <- mapply(c, beta1s$B0, beta1s$B1, SIMPLIFY = FALSE)
+# 
+# mapply(model_prediction, x, beta1s)
+
+
+# y_hat2 <- model_prediction(x, coeffs1)
+# prediction_error(y_hat2, y)
+
+# Manual way to do it 
+b0 <- 8
+b1 <- seq(0,10,0.5)
+error <- seq(0,10,0.1)
+
+for (i in 1:101) {
+  y_hat <- model_prediction(x,c(b0,b1[i]))
+  error[i] <- prediction_error(y_hat, y)
+  return(error[i])
+}
+
+
+bb0 <- seq(0,10,0.5)
+bb1 <- 3.5
+error_2 <- seq(0,10,.01)
+
+b <- for (i in 1:101) {
+  y_hat_2 <- model_prediction(x,c(bb0,bb1[i]))
+  error_2[i] <- prediction_error(y_hat_2, y)
+  return(error[i])
+}
+
+# Good to double check and see if he posts any solution - Go back to chapter and figure out how to plot the minimization!
+
+```
+
+We can use R's *lm* function for to find the best estimate of the model coefficients.
+```{r}
+fit <- lm(Y ~ X , df)
+
+summary(fit)
+```
+
+But let's also do things algebraically. In the case of simple regression, expressions for $\hat{\beta_0}$ and $\hat{\beta_1}$ are quite simple (this is sometimes referred to as the OLS solution). 
+
+$$
+\begin{aligned}
+\hat{\beta_1} = \frac{Cov(X,Y)}{\sigma_x^2} \\ 
+\hat{\beta_0} = \bar{Y} - \hat{\beta_1} \bar{X}
+\end{aligned}
+$$
+
+*Exercise* Write a function that takes in a data frame (that holds Y and X) and returns estimates of $\hat{\beta_0}$ and $\hat{\beta_1}$.
+
+```{r}
+ols <- function(y, x){
+  beta_1 <- cov(x, y) / var(x)
+  beta_0 <- mean(y) - (beta_1*mean(x))
+  return( c(beta_0,beta_1) )
+}
+```
+
+## Confidence Intervals
+
+The textbook describes methods for deriving confidence intervals for our coefficients. 
+  * What are the components of the formulas for the standard error of $\beta_0$ and $\beta_1$ ?
+  * What will be the impact if the number of datapoints increases (or decreases)?
+  * What will be the impact if variance in X increases (or decreases)?
+  * What will be the impact if variance in the "irredicuble error" increases (or decreases)?
+
+ Alternatively, we use bootstrapping to estimate confidence intervals for these model coefficients. Use sampling with replacement to generate 1000 bootstrap samples of our original dataframe. Use your function from the previous exercise to estimate the model coefficients for each. 
+
+```{r, eval=FALSE}
+# Let's define some helper functions for accomplishing the bootstrap
+bootstrap <- function(df, numSamples){
+  bootSamples <- list()
+  for (i in 1:numSamples){
+    bootSamples[[i]] = singleBootstrapSample(df)
+  }
+ return(bootSamples)
+}
+
+singleBootstrapSample <- function(df) {
+  return(data.frame(df[sample(seq(1,nrow(df)),nrow(df),replace=TRUE),]))
+}
+# We take original dataframe and take out what we just sampled and wrap that into a dataframe
+
+# Now let's generate the bootstrap replicates of the data and compute the OLS
+# estimate for each replicate (Like we're fitting a linear regression to new datasets)
+bootStrapDataSets <- bootstrap(df, 500)
+bootEstimates<-lapply(ols, bootStrapDataSets)
+
+# BootStrapDataSets is a vector of two values, so not sure why this isn't working
+
+# Finalize by putting the results into a dataframe
+estimatesDF = data.frame(matrix(unlist(bootEstimates) ,ncol=2,byrow=T))
+colnames(estimatesDF ) <- c("beta_0", "beta_1")
+
+
+```
+
+ Visualize the estimated sampling distributions of both $\hat{\beta_0}$ and $\hat{\beta_1}$. Additionally, come up with a 95% confidence interval for each. Compare your bootstrap estimate with the theoretical confidence intervals provided in the book. 
+```{r, eval=FALSE}
+bootConfInt <- as.vector(quantile(estimatesDF$beta_1,c(.025,.975)))
+
+se <- summary(fit)$coefficients[2,2]
+theoryConfInt <-c(fit$coefficients[2] - 2*se,  fit$coefficients[2] + 2*se)
+
+hist(estimatesDF$beta_1, xlab=expression(hat(beta)[1]),
+     main=expression( paste("Sampling distribution of ", hat(beta)[1] )) )
+
+abline(v = bootConfInt[1],lwd=3,col="firebrick")
+abline(v = bootConfInt[2],lwd=3,col="firebrick")
+abline(v = theoryConfInt[1],lwd=3,col="#3690C0")
+abline(v = theoryConfInt[2],lwd=3,col="#3690C0")
+```
+
+##  Model Accuracy
+ * We can compute the Residual Sum of Squares for any model. Once we know that, we can compute $R^2$. Why is $R^2$ helpful, what does it tell us? Think about the extreme ranges of $R^2$, what would those values tell us about our data and our model?
+
+##  Multiple Regression, Design Matrix, OLS Solution
+
+When we have multiple predictor variables, it is convenient to represent X as a matrix (called the Design matrix) and to proceed with matrix algebra representation of regression. First, let's start with a one dimesional case from previously where we have  $Y = \{y_1, y_2, ..., y_N \}$ and  $X = \{x_1, x_2, ..., x_N \}$. Our regression model has two coefficients: one for the intercept and one for the slope, $y_hat = \beta_0 + \beta_1 X$. Let's expand the vector X into a matrix X by adding a column of 1's to it. Now X might look something like this
+
+```
+| 1 | x_1 |
+| 1 | x_2 | 
+| 1 | x_3 | 
+| 1 | x_4 | 
+...
+```
+Why was this useful? Now we can represent our coefficients with the vector $\vec{\beta} = \{\beta_0, \beta_1 \}^T$ and our regression model is simply $\hat{Y} = X  \vec{\beta}$ or $Y = X  \vec{\beta} + \epsilon$.
+
+This form generalizes to any number of predictors that we might have in X. Let's suppose we have a predctor called X1 and a second called X2. Our design matrix simply has another column
+
+
+```
+| 1 | X1_1 | X2_1 |
+| 1 | X1_2 | X2_1 |
+| 1 | X1_3 | X2_1 |
+| 1 | X1_4 | X2_1 |
+...
+```
+
+
+Again, each row is a single observation, and each column represents the value of a predictor for that observation. Our regression model is still just $\hat{Y} = X  \vec{\beta}$ for any number of predictors, no matter the dimensionality of $X$ or $\vec{\beta}$.
+
+Solving the regression problem is again a matter of finding the optimal $\hat{\beta}$ that minimizes the residual squared error. This calclus problem has a simple solution, known as the Ordinary Least Squares (OLS) solution to multiple regression.
+
+$$
+\hat{\beta} = (X^T X)^{-1} X^T Y
+$$
+
+*Exercise*: Code up the OLS solution to Multiple Regression. Create a synthetic dataframe and fit your model. Confirm that your estimate of  $\hat{\beta}$ is fairly accurate. 
+
+```{r}
+df2<-data.frame(matrix(rnorm(500*2) , 500,2 ))
+df2[,3] <- rep(1,500)
+X <- as.matrix(df2)
+Y <- 5*df2$X1 -3*df2$X2 + 9 
+
+
+solve(t(X) %*% X) %*% t(X)  %*% Y
+```
+
+##  Multiple Regression, Coefficient Interpretation
+
+Suppose we have the following model to estimate GPA for Georgetown undergraduate students.
+
+$$GPA = \beta_0 + \beta_1 * Female + \beta_2 Age $$
+
+Where _Age_ is a continuous variable measured in years and gender is encoded as:
+
+  * Female = 1 if student is female
+  * Female = 0 if student is male
+
+  
+a) What is the interpretation of $\beta_0$ ?
+b) What is the interpretation of $\beta_1$ ?
+c) What is the expected GPA of a student who is male and 20 years old?
+d) Suppose you believe that males have lower GPAs than females. Further, suppose you believe that GPA tends to decrease as students get older. What would this imply about the coefficients of the model?
+e) Suppose we change the units of measurement for _Age_ from years to days. What effect would that have on $\beta_2$? This is an important reminder about interpreting the absolute magnitude of the coefficients. 
+f) Suppose we have two new predictors related to ranking in high school. Let $X_3$ be the state-wide rank of the high school that the student attended. Let $X_4$ be the class rank of the student within their high school class. Which predictor do you suspect would be more impactful and why?
+
+##3.
+Go through section 3.6.2 in the book.
+
+##  Multiple Regression, Multiple Comparisons
+With hypothesis testing, we tend to calculate p-values of some test statistic and then have some "acceptable" p-threshold that allows us to quantify the probabilty of a Type 1 error. A threshold of p=.05 is a common bar for establishing statistical significance, and this means we allow ourselves a 5% chance of falsely rejecting the null hypothesis. 
+
+But with Multiple Regression, we're conducting many hypothesis tests simultaneously - for every predictor variable, we're trying to establish where $\beta_j$ is nonzero, and we just p-values to make these quantifications. But if we have very many predictors, we're doing very many parallel hypothesis tests and our Type I error rate rises. 
+
+```{r}
+data_df <- data.frame(matrix(rnorm(500*101) , 500,101 ))
+names(data_df)[101] <- c("Y")
+fit <- lm(Y~.,data_df)
+```
+
+In this completely uncorrelated dataset, we see several of the fitted Betas are highly statistically significant. This is not because of any real relationships between X and Y, but simply due to chance. 
+
+##  Autoregression
+We won't spend much time this semester going over time series methods, but there's a simple method we can employ using just the knowledge we have of Multiple Regression. Consider a time series of temporally-ordered observations $X1, X2,...,X_{t-1}, X_t, X_{t+1},...$. Our goal is make accurate predictions of the future given our past observations. 
+
+In an Autoregression Model of order $K$, our prediction of each time point $X_{t}$ is that of a weighted, linear combinations of $K$ previous time steps:
+
+$$
+X_{t} = \beta_0 + \sum_{i=1}^K \beta_i X_{t-i} + \epsilon.
+$$
+
+This time series method takes exactly the same form as multiple regression, but where we've created predictors that are simply $K$-step lookbacks. We then estimate coefficients in the usual way. 
+
+The simplest version is an order-1 model, denoted $AR(1)$, where we consider only a single time step lookback.
+
+
+**A.** Use R's **load** function to import the dataset _retail.RData_. This data represents a time series of retail sales totals over a period of many years. The column _UnadjustedSales_ records the raw dollar amount of sales that occur in a given month. The column _AdjustedSales_ has taken into account the seasonality of retail sales and controlled for the month of the year. We will build an $AR(2)$ model of the _UnadjustedSales_.
+
+B. Create a new dataframe that will have three columns, representing $X$, $X_{t-1}$, and $X_{t-2}$. Note we'll have to reduce the total number of rows of this new data frame so that it's two less than our original time series. 
+
+```{r}
+load("retail.RData")
+N <- nrow(retail)
+
+timeseries <- data.frame( 
+  Y = retail$UnadjustedSales[3:N], 
+  X_1 = retail$UnadjustedSales[2:(N-1)],
+  X_2 = retail$UnadjustedSales[1:(N-2)] )
+```
+
+C. Compute the autoregression using something like **lm(Y ~ X1 + X2, data = timeseries)**. How well did the model do?
+
+```{r}
+fit <- lm(Y ~ X_1 + X_2, timeseries)
+```
+
+D. Repeat with the _AdjustedSales_ time series. Did we do better? Think back on what we've learned about interaction terms, how could we have done a montly adjustment in the first model?
+
+*D*. There's a function called *ar()* in base R. Try it out and compare. 

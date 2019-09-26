@@ -1,0 +1,138 @@
+---
+title: "inClass-02-13-2019"
+output: html_document
+---
+
+##1
+Let's verify that we understand the similarities between Neural Network and other models that we've talked about. Specifically, we'll establish that Multiple Regression (and Logistic Regression) are special cases of Neural Networks under very simple architectures.
+
+First, we generate some sample data for simple regression.
+```{r}
+library(nnet)
+
+x1 <- rnorm(100)
+x2 <- rnorm(100)
+y <- 5 +  2*x1 + -3*x2 + rnorm(100) 
+plot(x1,y)
+
+df = data.frame(Y=y, X1 = x1, X2 = x2)
+```
+
+(a) Fit a linear model $y ~ x$ to this data in order to estimate the regression coefficients $\beta_0$ and $\beta_1$. Do this using built-in R methods.
+
+```{r}
+linear_fit <- lm(Y ~ X1 + X2, data=df)
+summary(linear_fit)
+```
+
+(b) Let's do the same with a neural net, but one with a simple architecture. A neural net with no hidden layer just describes an architecture where each input feature is linearly combined (via some weights) to create an output feature. This will be identical to Multiple Regression if we have no non-linear transformations along the way. Create such a neural net with the nnet package and confirm that you can recover the right parameter weights. 
+
+With nnet, to do regression output (as opposed to classification output), use the argument "linout = TRUE". Also, use the argument "skip = TRUE" to confirm that you intend to _skip_ the hidden layer and just go straight from the input to the output layer. Comments on the neural net architecture and weights, do they match your expectation?
+
+```{r}
+nn_fit <- nnet(Y ~ X1 + X2, data=df, size=2, linout = TRUE)
+summary(nn_fit)
+```
+
+All of the above is minimizing the loss function. These are the value of loss after each iteration. It's going through the gradient descent process. 
+
+If the loss doesn't change by some amount, we're probably close to the bottom and so we'll stop. So even if you specify higher iterations, it'll stop somewhere. 
+
+2-2-1 means 2 inputs, 2 n-units (neurons?), 1 output
+
+b -> h1 is bias on hidden value 
+i1 -> h1 is input to hidden
+h2 -> 0 is hidden unit 2 to output
+
+So we're manually doing what we did with the Tensor Flow situation. 
+
+Skip connections allow you to go straight from input to output. Linear regression is a special case - we want linout = true, size = 0, and skip = True. The weights will be equatable to the coefficient values in a linear regression 
+
+##2
+We can use a neural network to approximate arbitrary functions. 
+
+```{r}
+
+myfunc = function(x){x*sin(x)} # Define the function 
+
+xx <- seq(-20,20,by=.1) # vector of x variables for plotting
+mydf.test = data.frame(x=xx, y = myfunc(xx))
+
+plot(y ~x, data = mydf.test, type = 'l')
+
+# Now make data to train the network on
+
+x <- runif(20, min = -20, max = 20 )
+mydf.train = data.frame(x = x, y = myfunc(x))
+
+points(y ~x, data = mydf.train, lwd = 2, col = 2)
+
+# Train network and make predictions
+# Note linout = T
+
+net1 <- nnet(y ~x, data = mydf.train, size = 18, decay = .001, maxit = 2000, linout = T)
+pred <- predict(net1, newdata = mydf.test, type = "r")
+
+# Make a few plots of predictions
+
+lines(xx,pred, col = 2)
+```
+
+##3 Tensorflow Playground
+###A
+Use the playground to create an architecture for logistic regression. We'll have two inputs and one output. How many hidden layers are there?
+
+(i) Use the training dataset where the two classes are easily separable. Train your model. How well does your classifier do?
+(ii) What are your fitted weights? Use those weights to compute (by hand) what the predicted probability is, verify your intuition.
+
+###B
+
+(i) Now use the bullseye data and try to fit this data with logistic regression. Does it work?
+(ii) Try using different transformations of the data. See if you can get logistic regression to fit this data.
+(iii) Now go back to the original data features. Add a hidden layer with two units and fit the model. Can it work perfectly? Try adding another unit to the hidden layer.
+
+###C
+(i) Try one of the very difficult datasets (I found the spiral to be the most difficult). Try any architectures and activation functions that you want. How well can you do? What do you notice?
+
+## 4
+A helpful article: http://colah.github.io/posts/2014-03-NN-Manifolds-Topology/
+
+## 5 Image Classification
+
+Load the MNIST data for a couple of the digit types.
+```{r}
+load("~/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics/mnist68.RData")
+images_df <- mnist68
+```
+
+Feel free to use this function for plotting images.
+```{r}
+plot_digit <- function(j){
+  arr784 <- as.numeric(images_df[j,1:784])
+  col=gray(12:1/12)
+  image(matrix(arr784, nrow=28)[,28:1], col=col, 
+        main = paste("this is a  ",images_df$labels[j]))
+}
+
+table(images_df$labels)
+
+plot_digit(9594)
+```
+
+Let's make a dataframe to work with. Here, our "features" are the pixel values, and let's pick just a few of them to start with.
+
+```{r}
+
+myfeatures = sort(sample(784,25))
+myfeatures
+
+mydf = images_df[,c(myfeatures,785)]
+head(mydf)
+mydf$labels = as.numeric(mydf$label==8)
+```
+
+1. Use logistic regression to predict the image label from the pixel values. Report a confusion matrix.
+
+2. Repeat with nnet using any architecture you like. 
+
+3. Think about some limitations of using raw pixel values as features. What else might be done?

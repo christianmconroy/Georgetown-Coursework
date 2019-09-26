@@ -1,0 +1,54 @@
+---
+title: "Leaflet-GeoJSON"
+output: html_document
+---
+
+# GeoJSON is a format for encoding a variety of geographic data structures.A GeoJSON object may represent a geometry, a feature, or a collection of features.GeoJSON supports the following geometry types: Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, and GeometryCollection. Features in GeoJSON contain a geometry object and additional properties, and a feature collection represents a list of features.
+
+
+```{r}
+if(!require(jsonlite)){
+    install.packages("jsonlite")
+    library(jsonlite)
+}
+```
+
+```{r}
+# install.packages('devtools')
+library(devtools)
+
+if(!require(leaflet)){
+    install.packages("leaflet")
+    library(leaflet)
+}
+
+if(!require(shinythemes)){
+    install.packages("shinythemes")
+    library(shinythemes)
+}
+```
+
+
+```{r}
+library(jsonlite)
+library(leaflet)
+```
+
+```{r}
+# Load data from a JSON file
+url <- "https://raw.githubusercontent.com/glynnbird/usstatesgeojson/master/california.geojson"
+geojson <- jsonlite::fromJSON(url)
+
+# Create a leaflet map
+leaflet() %>% 
+  
+  # Add map tiles
+  addTiles() %>%
+  
+  # Set the map view by longitude and latitude
+  setView(lng = -98.583, lat = 39.833, zoom = 3) %>% 
+  
+  # Add the now-styled GeoJSON object to the map (Layer)
+  addGeoJSON(geojson)
+```
+

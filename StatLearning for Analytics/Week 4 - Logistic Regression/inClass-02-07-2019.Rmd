@@ -1,0 +1,236 @@
+---
+title: "inClass-02072019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require(knitr)
+require(MASS)
+require(boot)
+require(ISLR)
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="~/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics")
+```
+
+## 1. Logistic Regression
+ * Logit Function
+ * odds ratio, log odds
+ * coefficient intepretation
+ 
+## 2. Mulitple Logistic Regression
+  * parameter interpretation
+  * Interactions
+ 
+## 3. Interactive Application
+  - explore the accompanying Shiny App
+  
+$p(Y=1|X) = \beta_0 + \beta_1 Age + \beta_2 Female + \beta_3 Age*Female$
+  
+*Exercise*
+1. What is the effect on the sigmoid curve of changing beta_0?
+
+2. What is the effect of changing beta_1?
+
+3. What is the effect of changing beta_2?
+
+4. What is the effect of the interaction term beta_3? (it's a little hard to tell)
+
+5. Can you find a setting of the sliders such that the relationship between Y and Age is reversed?
+
+## 4. Model Evaluation in Classification
+ * Prediction accuracy
+ * True Positives, False Positives, True Negatives, False Negatives
+ * Confusion Matrix
+ * ROC curve, AUC
+ 
+```{r}
+example2 <- read.csv("example2.csv", header=TRUE)
+names(example2) <- c("X","Y","Z")
+plot(Y ~ X, data = example2, col = Z+1, lwd = 3, asp = 1)
+```
+ 
+Now let's fit a logistic regression model and make a confusion matrix.
+
+```{r}
+fit <- glm(Z ~ X + Y , data = example2, family=binomial)
+example2$pred = predict(fit, example2, type = "response")
+  example2$class_pred = predict(fit, example2, type = "response") > .5
+
+# We create a threshold at .5 and get a Boolean vector based on true prediction or false prediction
+
+#accuracy - which rows did we get the class prediction correctly equal to z
+sum(example2$class_pred == example2$Z) / nrow(example2)
+
+# confusion matrix
+table(example2$Z, example2$class_pred)
+
+# Downside to thinking about accuracy - The 0.9 is an average over both classes. But might we be more interested in the fraction I got right in the red or the fraction I got right in the red?
+
+# So we need to think about why you are building the model.
+  # For example, if I am trying to detect malware and the wrong is a false positive, that's not a big deal because I said it was malware, and you checked and it wasn't. But false negative means we didn't catch malware that was real malware and now we're fucked
+  # With medicine too, false negative is a bit worse than false positive. 
+
+# Confusion matrix 
+#        T
+#    | 0 | 1 | 
+#    ---------
+#    0 |TN|FN|
+# P ----------
+#   1 |FP|TP|
+#   ----------
+#
+
+# I can change the threshold if I am really unncomfortable with false positives? Increase threshold because it becomes harder to get to a positive prediction. We have to be pushed in a farther position in our decision boundary space to get over the threshold. This would be a risk of more false negatives though (we'll miss stuff).
+
+# But he pointed to bottom left in output as False Negative and Top Right as False Positive, so be careful! 
+```
+ 
+What happens when we change the threshold?
+
+
+```{r}
+table(example2$Z, example2$pred > .95)
+```
+ 
+ 
+
+```{r}
+table(example2$Z, example2$pred > .1)
+```
+
+ 
+*Exercise* - We're going to make our own ROC curve
+
+1. Create a DataFrame for evaluation data where you have column corresponding to the "true" labels and a column corresponding to the predicted probabilities.
+
+2. Create a function that takes in a DataFrame (like the above one) as well as a probability threshold, and returns the corresponding confusion matrix.
+
+```{r}
+confusion_mat <- function(df, threshold){
+  table(df$Z , df$pred > threshold)
+}
+
+# Pulling out TP and FP numbers from the confusion matrices and calculating the TP and FP rate. FP = (1 Fales/0) in terms of the confusion. Also known as sensitivity and 1 - specificity, which is what you need to make a ROC curve 
+  # So this might be actually the same as F1!!!
+```
+3. Simplify your previous function by having it return only the True Positive Rate and number of False Positive Rate.
+
+```{r}
+tp_fp = function(mydf,p){
+  mytable = table(mydf$Z , mydf$pred > p)
+  x = c(mytable[2,2]/sum(mytable[2,]), mytable[1,2]/sum(mytable[1,]))
+  names(x) <- c("trueP", "falseP")
+  return(x)
+}
+```
+
+4. For a range of probability thresholds from 0.0 to 1.0, evaluate you function from step 3 and collect the corresponding True Positive Rates and False Positive Rates.
+
+```{r}
+trueP <- falseP <- rep(NA,100)
+thresholds <- seq(0,1,length.out=500)
+
+for (j in 2:(length(thresholds)-1)){
+  x <- tp_fp(example2, thresholds[j])
+  trueP[j] <- x[1]
+  falseP[j] <- x[2]
+}
+```
+
+5. Make a plot of TPR vs FPR (FPR on x-axis).
+
+```{r}
+plot(falseP, trueP, type='l')
+# For any false positive rate youo are willing to tolerate, what true positive rate can your model get?
+# The model that lies on a diagonal is doing a really bad job. The model that hangs a right angle from bottom to top towards right is perfect. 
+# Can summarize the ROC curve with the AOC (Area Under the Curve) -> Integral under the curve
+# Worst AUC you can ever have is half. Best you can have is 1. So it will be between 0.5 and 1
+```
+
+  ```{r}
+  install.packages('pROC')
+  library(pROC)
+  r <- roc(example2$Z, example2$pred)
+  plot(r)
+  auc(example2$Z, example2$pred)
+  
+  # If you have an AOC less than 0.5, it means I'm essentially doing worse than chance and flipping my predictions would be just as effective. 
+  ```
+ 
+# Exercise
+
+##  MNIST
+
+The MNIST dataset is a famous benchmark in computer vision. It consists of low-resolution images of handwritten digits (from postal letters). I've prepared a subset of MNIST consisting of just images of "6" and of "8". This dataframe contains nearly twelve thousand images. 
+
+```{r}
+load("mnist68.RData")
+dim(mnist68)
+
+head(mnist68$labels)
+```
+Each image is 28 pixels by 28 pixels. The scalar value of each pixel just refers to how light or dark each pixel is: a white pixel is a value of 0, a black pixel is a value of 1, and everything in between is some shade of gray. 
+
+In this dataframe, each row corresponds to a single image. The first 784 columns are the pixels and their corresponding values. The final column is the target label. Let's take a look at some examples.
+
+```{r}
+plot_digit <- function(j){
+  arr784 <- as.numeric(mnist68[j,1:784])
+  col=gray(12:1/12)
+  image(matrix(arr784, nrow=28)[,28:1], col=col, 
+        main = paste("this is a ",mnist68$labels[j]))
+}
+
+# So what we're doing is creating a function that:
+# 1. Makes sure that each value for the row j (the image) in question is numeric
+# 2. Setting the grayscale: 0 is black and 1 is white
+# 3. Creating a matrix of 28 rows going from the 28th pixel to the 1st and using the greyscale we've laid out (In reality the numbers are gray to a shade between 1 and 12)
+# 4. Pasting the target variable at the top of the image as the title
+```
+
+```{r}
+plot_digit(9594)
+```
+
+
+```{r}
+plot_digit(9591)
+```
+
+
+This data is obviously quite high dimensional compared to some of the datasets we looked at in the ISLR package. But this high-dimensionality is more realistic for contemporary problems that involve images, audio, video, and natural language. 
+
+We are going to build a classifier to predict whether an image is of an "8" or a "6".
+
+1. There are 784 predictors in these images. Pick a feature at random (ie. a column of the MNIST dataframe). Compute the standard deviation of this feature.
+
+(We'd maybe want to look at the pixels where an 8 and a 6 are different. Conversely, should we include 0,0 in the model? Probably not because it's common to both.)
+
+(Can maybe also downsample in R. Breakdown from 28 by 28 to 3 by 3)
+
+2. We want to find features (pixels) that aren't always white for every image. We need to find some with non-zero variance if we hope to have any chance at building a classifier. Identify two such features from the dataframe.
+
+3. Create a new dataframe with your two features plus the label column. Make a plot of feature_1 vs feature_2 and color the points according to the label. 
+
+4. Run a logistic regression on this model. How does the model perform?
+
+5. Find a few more features(pixels) that you can add in to the model and run again. 
+
+
+## 2.  Auto
+```{r}
+library(ISLR)
+head(Auto)
+```
+(a) Make a binary variable mpg01 that contains a 1 if mpg is above its median, and 0 otherwise.
+
+(b) Graphical investigation. We can make scatter plots of two numeric variables, with mpg01 as color.
+
+(c) Fit a Logistic Regression model with 2 of the predictors. Interpret the coefficients.
+
+(d) logistic regression on the training data. Make a confusion matrix for the Bayes classifier (cutoff = p = 0.5)
+
+(e) Make a ROC curve.

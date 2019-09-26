@@ -1,0 +1,336 @@
+---
+title: "inClass-03/20/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(ISLR)
+library(leaps)
+```
+
+# Regularized Regression
+
+With multiple linear regression, our loss function was the Residual Sum of Squares
+
+\[
+\begin{align}
+L = RSS =& \sum_i (\hat{y_i} - y_i)^2 \\
+&= \sum_i (\left( \beta_0 + \beta_1 X_1 + .... \right) - y_i)^2
+\end{align}
+\]
+
+With this is mind, we could cast the problem of statistical inference as merely a problem of optimization: we want to find the vaulues of $\beta_0, \beta_1,...$ which lead to the _minimum_ value of RSS. 
+
+\[
+\hat{\beta} = \min_{\beta} RSS \\ 
+\hat{\beta} = \min_{\beta} \sum_i (\left( \beta_0 + \beta_1 X_1 + .... \right) - y_i)^2
+\]
+
+Then $\hat{\beta}$ is our _best_ estimate of the "right" values of the model coefficients. 
+
+However, there are a few regimes where this model will fail and we need to come up with a more general form that allows us to make an accomodation. For example, if the number of predictors is very large, many of the predictors might be uncorelated with Y, and we just end up overfitting the training data. Worse still, if the number of predictors is larger than the number of datapoint, then the Linear Regression problem has no solution. To prevent this kind of overfitting, we will turn to _Regularized Regression_ (also known as Penalized Regression). 
+
+We change our Loss function
+
+\[
+L = \sum_i (\left( \beta_0 + \beta_1 X_1 + .... \right) - y_i)^2 + g(\beta) \\
+L = f(X, \beta) + g(\beta) \\ 
+L = f(X, \beta) + \lambda g(\beta) \\ 
+\]
+
+Most commonly, we'll still use the RSS as part of our loss function.
+
+\[
+L = RSS + \lambda g(\beta)
+\]
+
+The interesting differenc is that we now add a new term to the loss function and this term only depends on the values of the coefficients $\beta$. That function can take many forms and we scale it by a scalar factor $\lambda$. The net effect of this is that values of $\beta$ which have large magnitude will be _penalized_ due to the presence of this new term.
+
+Now, when we solve this optimization problem, the $\hat{\beta}$ we find is not just dependent on minimizing RSS. Instead, we'll see that we need to tradeoff minimizing RSS under the constraints implied by the function $g(\beta)$. Large values of $\beta$ tend to be penalized, so that $\hat{\beta}$ will tend to reveal smaller overall magnitudes of the parameters. For this reason, these techniques are often reffered to as _shrinkage_.
+
+
+## Ridge Regression
+With Ridge Regression, our penalty function on $\beta$ is the L2-norm, or Euclidean magnitude.
+
+\[
+g(\beta) = \Vert \beta \Vert _2 = \sum_j \beta_j ^2
+\]
+
+
+## LASSO
+
+With LASSO Regression, our penalty function on $\beta$ is the L1-norm, similar to the absolute value.
+
+\[
+g(\beta) = \Vert \beta \Vert _1 = \sum_j \lvert \beta_j \rvert
+\]
+
+
+## Constrained Optimization   Concepts
+
+Create some fake data and plot it.
+
+```{r echo=FALSE}
+x <- rnorm(30)
+y <- -2 + 2*x + .3*rnorm(30) 
+plot(x,y)
+```
+
+
+Now, we want to fit a simple linear regression model to this data. Recall that we're trying to find the combination of $\beta_0$ and $\beta_1$ that yields the lowest RSS. Let's visualize this RSS surface. I'll also highlight the "true" value of the coefficients.
+
+
+```{r}
+# The below is a vizualization of the loss surface 
+# The contours here mean curves in the parameter space that have a constant value of loss 
+# The red dot is the clearly defined minimum, or the true value 
+# If I use this to find the optimal estimate of Beta 0, the optimal estimate would be 2 because the red dot is the smallest loss function or -2ish in terms of Beta 1 (just follow to the red dot)
+
+beta_0_range = seq(-5,5,length.out=50)
+beta_1_range = seq(-5,5,length.out=50)
+
+calc_SSE <- function(parameters, x, y) {
+  y_hat <-parameters[1] + parameters[2]*x
+  sum((y_hat - y)^2)
+}
+
+beta_space <- expand.grid(beta_0_range, beta_1_range)
+beta_space$SSE <- apply(beta_space[,c("Var1","Var2")], 1, function(p){ calc_SSE(p,x, y) })
+
+contour(x=beta_0_range, y=beta_1_range, z= matrix(beta_space$SSE, nrow=50, byrow=TRUE),nlevels=20, xlab="beta_0", ylab="beta_1" )
+points(2,-2,col="red")
+```
+
+I have highlighted in red the likely minimum of this paraboloid, the point $\beta_0=2 \beta_2=-2$. This is the global minimum over the whole parameter space. But I can also ask what the minimum of the paraboloid would be subect to some constraint. For example, what if I say that $\beta_1$ must be constrained to be equal to 2. What does this imply about our minimization problem? 
+
+```{r echo=FALSE}
+
+# In the below, the slice is a constraint that gives us a new loss function. The absolute magnitude of the loss will be a bit higher than in the previous example without the slice.
+
+contour(x=beta_0_range, y=beta_1_range, z= matrix(beta_space$SSE, nrow=50, byrow=TRUE),nlevels=20 )
+abline(h=2, col="red")
+```
+
+This plot shows the line $\beta_1=2$ and this is the constraint that we must adhere to. So our answer about the "minimum" must be the minimum of the paraboloid that lies on this line. Said differently, imagine that this line "slices" through the paraboloid and yields a parabola of which we simpy find the minimum. So our new minimum (under the constraint) is a little bit different than the "true" minimum.
+
+Similarly, we can have a different constraint, maybe $\beta_0$ must be 1.
+
+```{r echo=FALSE}
+contour(x=beta_0_range, y=beta_1_range, z= matrix(beta_space$SSE, nrow=50, byrow=TRUE),nlevels=20 )
+abline(v=1, col="red")
+
+# Optial value for B1 is roughly -2 here. Loss will still be a bit worse than in the unconstrained case. 
+
+```
+
+Aside from simple equality constraints, we can have constraint regions. So our constraint might be that $\beta_0$ must be greater than or equal to -2. So any value of $\beta_0$ large than -2 is permissible. In this case (any in many cases), the constraint region is optimized at the boundary of the constraint, so the line x=-2 is still the relevant constraint. And we can also have linear and non-linear constraints boundaries, and that's what Lasso and Ridge Regression are all about. 
+
+
+###Ridge
+
+Let's look again at the loss function for Ridge Regression.
+
+\[
+L = \sum_i (y_i - \hat{y_i})^2 + \lambda \sqrt{\sum_j \beta_j ^2}
+\]
+
+For any given value of the penalization parameter $\lambda$, we can recast our Loss function as with the form of a constraint.
+
+\[
+\begin{aligned}
+L = \sum_i (y_i - (\beta_0 + \beta_1 x_i))^2  \\
+\textrm{subject to } \beta_0^2 + \beta_1^2 \le s^2
+\end{aligned}
+\]
+
+which is a circular region in our two dimensional parameter space and is a hyper-sphere most generally. 
+
+```{r echo=FALSE}
+contour(x=beta_0_range, y=beta_1_range, z= matrix(beta_space$SSE, nrow=50, byrow=TRUE),nlevels=20 )
+
+radius <- 1
+theta <- seq(0, 2 * pi, length = 200)
+polygon(x = radius * cos(theta) , y = radius * sin(theta) , col ='#ff000060')
+```
+
+
+### Lasso
+Let's look again at the loss function for Lasso Regression.
+
+\[
+L = \sum_i (y_i - \hat{y_i})^2 + \lambda \sum_j |\beta_j|
+\]
+
+For any given value of the penalization parameter $\lambda$, we can recast our Loss function as with the form of a constraint.
+\[
+\begin{aligned}
+L = \sum_i (y_i - (\beta_0 + \beta_1 x_i))^2  \\
+\textrm{subject to } |\beta_0| + |\beta_1| \le s
+\end{aligned}
+\]
+
+That constraint $|\beta_0| + |\beta_1| \le s$ defines a region in the $\beta_0, \beta_1$ parameter space. In two dimensions this region is "diamond" shaped and in higher dimensions is referred to as an "L-1 Ball" but is a pointy shape nonetheless. 
+
+```{r echo=FALSE}
+contour(x=beta_0_range, y=beta_1_range, z= matrix(beta_space$SSE, nrow=50, byrow=TRUE),nlevels=20 )
+polygon(x=c(0,2,4,2), y = c(-2,0,-2,-4),col ='#ff000060')
+```
+
+### Why Do All This?
+These constraint regions enforce that our estimates of $\hat{\beta}$ will lie within some bounded area near zero. This prevents any of the coefficients from being too large and thus helps prevent overfitting and improves model variance. 
+
+As we increase the value of the penalty $\lambda$, we make our constraint region tighter and tighter. Consider the extreme cases here. If $\lambda$ is very small (very little penalization), then our constraint region is very large and it probably contains the true minimum RSS. So our estimate of $\hat{\beta}$ in this instance will be the same as with unconstrained regression. As we increase $\lambda$, the constraint region pulls in toward the origin, thus making our estimate of $\hat{\beta}$ different than the one for just RSS. As $\lambda$ is increased further, our parameters shrink closer and closer to the origin. 
+
+The important difference betwee Lasso and Ridge Regression is what happens as we increase $\lambda$. For Ridge, as we increase $\lambda$, our coefficients smoothly shrink in magnitude as they stay within the constraint region. The coeffcients can change sign, but it's unlikely that they're every exactly 0. 
+
+In contrast, because of the L-1 Ball constraint region of Lasso, as we increase $\lambda$ (shrink the constraint region), it is highly likely that the our best estimate of $\vec{\beta}$ hits one of the "corners" of the L-1 Ball, where it then gets stuck. What this means is that a subset of the corresponding features are given a coefficient of exactly zero, thus taking them out of the model. We'll explore these ideas in the next section, but the takeaway is that Lasso performs "feature selection" for us - telling us which features can be dropped from the model for any given level of $\lambda$.
+
+
+
+### Regularized Regression Trajectories
+
+Aside from thinking about $\lambda$ as defining a constraint region, we can examine the full range of $\lambda$ and examine the impact on the optimal $\hat{\beta}$. Think about the extreme cases here:
+
+**Questions**
+1. When $\lambda = \inf$, what is the value of $\hat{\beta}$?
+1. When $\lambda = 0$, what is the value of $\hat{\beta}$ and how does it relate to $\hat{\beta}$ of regular regression?
+
+Take a look with a real dataset. 
+
+```{r}
+library("glmnet")
+library("ISLR")
+
+
+head(Hitters)
+```
+
+```{r}
+# We have to make sure that all that go in here are numeric, so we have to create the numerics for ourselves in some cases when they have categorical variables 
+# Make a model matrix as in the R lab video.
+X.model = model.matrix(Salary ~ .-1, data = Hitters)
+head(X.model)
+y = Hitters$Salary
+
+# remove the NAs:
+y <-na.omit(y)
+
+# Make a sequence of ridge regression models and plot:
+# When alpha equals 0, that is ridge reg and when alpha = 1 that is lasso
+# Elastic net is another option that is in between ridge and lasso
+fit.ridge = glmnet(X.model, y, alpha = 0)
+plot(fit.ridge, xvar = "lambda")
+grid(col = 2)
+
+# We end up with a 20 x 100 matrix, meaning 20 variables and 100 different values of lambda 
+```
+
+**Question**: What is this trajectory plot is telling us?
+
+
+### Exercise 
+1. Divide entries in the first two columns by 10. Redo the fit and the plot. Do any of the curves change substantially?
+```{r}
+# We've got to standardize!
+X.model2<-X.model
+X.model2[,1] <- X.model[,1] / 10
+X.model2[,2] <- X.model[,2] / 10
+
+fit.ridge2 = glmnet(X.model2, y, alpha = 0)
+plot(fit.ridge2, xvar = "lambda")
+
+```
+
+It is wise to standardize the model features (so that the sum of squares of all columns now are 1).
+
+```{r}
+# We're standardizing all 
+for (j in 1:20){X.model[,j] <- X.model[,j]/sqrt(sum(X.model[,j]^2))}
+fit.ridge3 = glmnet(X.model, y, alpha = 0)
+plot(fit.ridge3, xvar = "lambda")
+grid(col = 4)
+```
+
+Now that all the features have similar magnitudes, there are more coefficients in the trajectory plot that have similar magnitudes.
+
+
+#### Now LASSO
+
+Now explore the lasso. Let's use the same model matrix, the standardized one we just created.
+
+```{r}
+fit.lasso = glmnet(X.model, y, alpha = 1)
+plot(fit.lasso)
+grid(col = 4)
+```
+
+This is a plot of the coefficient magnituges against the L1 norm of the coefficients (the sum of absolute values).  If this is large, this means lambda must be small. The right side of the plot corresponds to the case with is no lambda. The left side of the plot corresponds to where lambda is as large as it gets.
+
+You can also make a LASSO plot against the value of $\lambda$ which can be a little easier to talk about. 
+
+```{r}
+plot(fit.lasso,xvar = "lambda")
+grid(col = 4)
+Opt <- as.matrix(coef(fit.lasso, fit.lasso$lambda.min))
+# Is there a better way to get at the answer here than making it into a data frame? 
+```
+
+**Questions**
+
+1. Which side of this plot corresponds to large values of $\lambda$? Which side of this plot corresponds to small values of $\lambda$? Which side of this plot corresponds most closely to regular regression?
+
+Right and Left and Left
+
+2. At a value of $log \lambda = 1$, how many features have been removed from the model?
+
+29
+
+3. At a value of $log \lambda = 3$, how many features remain in the model?
+
+2 (3 if counting intercept)
+
+4. In what way does LASSO help us with the problem of feature selection? Does Ridge Regression also help in that way?
+
+Ridge did not, but Lasso did. 
+
+
+
+### Cross Validation
+So how do we choose the right value of lambda? As is becoming a common theme in this course, we'll use Cross Validation. And the glmnet package makes this very easy for us.
+
+```{r}
+cv.lasso = cv.glmnet(X.model,y,alpha = 1)
+plot(cv.lasso)
+
+# We have fewer and fewer predictors, so obviously it won't fit as well. 
+# We can see that at some point, they are all just about the same, so we'll calculate how far left or right until I get an SD away from the best one 
+# So if best is log lambda 2.5 and the one on the right is 4.5 in terms of log(Lambda), it will be more constrained with fewer vars. 
+# We want least complex will still approximately same performance as the best one. Pretty constrained but still peforms as well as the rest. So in this case, the 4.5. 
+```
+
+The plot shows that as $\lambda$  increases, the mean squared error increases as well due to a larger bias (since the coefficients are forced to be small). The plot stays fairly flat until about log(lambda) = 3 or so, in which case there are still six predictors in the model.
+As lambda increases further, these six predictors remain in the model but the estimated mean square error increases. So it seems that log(lambda) = 3 is a good choice.
+
+#### Coefficient Outputs
+Notice the outputs of the fit is a matrix called beta: this has nrow equal to the total number of features in the model, and ncol equal to the number of different values of lambda that were computed. 
+
+**Question**
+
+What does this matrix represent? How can we use it?
+
+**Exercise**
+
+Cross validation told us that a value of log-lambda of 3 is a pretty good bet. Extract the model coefficients that correspond to log-lambda of (approximately) 3. Recall, there should only be 6 non-zero coefficients. 
+
+#### Predictions
+The predict function for these "glmnet" objects will allow us to specify which value of lambda we want. By default, this function return predictions for the full range of $\lambda$ but you can also specify a single value.
+
+```{r}
+lasso_prediction_full <- predict(fit.lasso, X.model[1:2,])
+
+lasso_prediction_best <- predict(fit.lasso, X.model[1:2,], s=fit.lasso$lambda[29])
+
+
+```

@@ -1,0 +1,312 @@
+---
+title: 'Analytics 512: In-Class 1/30/19'
+output:
+  html_document: default
+  pdf_document:
+    fig_caption: yes
+---
+
+
+##  Multiple Regression, Design Matrix, OLS Solution
+
+When we have multiple predictor variables, it is convenient to represent X as a matrix (called the Design matrix) and to proceed with matrix algebra representation of regression. First, let's start with a one dimesional case from previously where we have  $Y = \{y_1, y_2, ..., y_N \}$ and  $X = \{x_1, x_2, ..., x_N \}$. Our regression model has two coefficients: one for the intercept and one for the slope, $y_hat = \beta_0 + \beta_1 X$. Let's expand the vector X into a matrix X by adding a column of 1's to it. Now X might look something like this
+
+```
+| 1 | x_1 |
+| 1 | x_2 | 
+| 1 | x_3 | 
+| 1 | x_4 | 
+...
+```
+Why was this useful? Now we can represent our coefficients with the vector $\vec{\beta} = \{\beta_0, \beta_1 \}^T$ and our regression model is simply $\hat{Y} = X  \vec{\beta}$ or $Y = X  \vec{\beta} + \epsilon$.
+
+This form generalizes to any number of predictors that we might have in X. Let's suppose we have a predctor called X1 and a second called X2. Our design matrix simply has another column
+
+
+```
+| 1 | X1_1 | X2_1 |
+| 1 | X1_2 | X2_1 |
+| 1 | X1_3 | X2_1 |
+| 1 | X1_4 | X2_1 |
+...
+```
+
+
+Again, each row is a single observation, and each column represents the value of a predictor for that observation. Our regression model is still just $\hat{Y} = X  \vec{\beta}$ for any number of predictors, no matter the dimensionality of $X$ or $\vec{\beta}$.
+
+Solving the regression problem is again a matter of finding the optimal $\hat{\beta}$ that minimizes the residual squared error. This calclus problem has a simple solution, known as the Ordinary Least Squares (OLS) solution to multiple regression.
+
+
+$$
+RSS = \sum_i (Y_i - \hat{Y}_i)^2 \\
+= \sum_i (Y_i - X \vec{\beta})^2
+$$
+
+For convenience, let's define a Residual vector $\vec{e}$.
+
+$$
+\vec{e} = Y - \hat{Y} \\
+ = Y - X\vec{\beta}
+$$
+
+And notice that we can write RSS in terms of $\vec{e}$.
+
+$$
+RSS = \sum_i (Y_i - \hat{Y}_i)^2 \\
+= \sum_i (Y_i - X \vec{\beta})^2 \\
+ = \vec{e}^T \vec{e} \\
+ = (e_1e_1 + e_2e_2 + ... e_Ne_N)
+$$
+
+We can also write the residual vector in terms of the regression equations.
+
+$$
+e^T e = (Y - X\beta)^T (Y - X\beta) \\ 
+= Y^T Y - X^T\beta^TY - Y^TX\beta + X^T\beta^TX\beta \\
+= Y^TY - 2 \beta^T X^T Y + \beta^T X^T X \beta
+$$
+
+Now we want to find the values of $\beta$ that minimize RSS. 
+
+$$
+\frac{\partial L}{\partial \beta} = 0 \\
+\frac{\partial e^T e}{\partial \beta} = \frac{\partial}{\partial \beta} Y^TY - 2 \beta^T X^T Y + \beta^T X^T X \beta \\
+0 = -2X^TY + 2X^TX \hat{\beta}
+$$
+
+Rearranging the above yields the "Normal Equations" of regression
+
+$$
+X^TX\hat{\beta} = X^TY
+$$
+
+This allows us to solve for $\hat{\beta}$ - the optimal estimate of the coffcients given $X$ and $Y$.
+
+$$
+\hat{\beta} = (X^T X)^{-1} X^T Y
+$$
+
+By the Gauss-Markov Theorem, this estimate is the best linear unbiased estimator of the linear regression problem. Anything else would be a worse estimator.  
+
+This analytical expression for $\hat{\beta}$ is likely the only time this semester in which we will have such a clear solution to any statistical or ML model. All other techniques that we will learn about will require numerical approximation methods to fit the model. 
+
+### Demo
+ Code up the OLS solution to Multiple Regression. Create a synthetic dataframe and fit your model. Confirm that your estimate of  $\hat{\beta}$ is fairly accurate. 
+
+```{r}
+df2<-data.frame(matrix(rnorm(500*2) , 500,2 ))
+df2[,3] <- rep(1,500)
+X <- as.matrix(df2)
+Y <- 5*df2$X1 -3*df2$X2 + 9 
+
+
+solve(t(X) %*% X) %*% t(X)  %*% Y
+# This is the OLS Solution above. I'm trying to recover the 5, 3, and 9. Solve is for the inverse of the matrix. 
+# The error term of course is left out
+# General form for constructing the loss form will come up again with things like machine learning
+```
+
+##  Multiple Regression, Coefficient Interpretation
+
+Suppose we have the following model to estimate GPA for Georgetown undergraduate students.
+
+$$GPA = \beta_0 + \beta_1 * Female + \beta_2 Age $$
+
+Where _Age_ is a continuous variable measured in years and gender is encoded as:
+
+  * Female = 1 if student is female
+  * Female = 0 if student is male
+
+  
+a) What is the interpretation of $\beta_0$ ?
+b) What is the interpretation of $\beta_1$ ?
+c) What is the expected GPA of a student who is male and 20 years old?
+d) Suppose you believe that males have lower GPAs than females. Further, suppose you believe that GPA tends to decrease as students get older. What would this imply about the coefficients of the model?
+e) Suppose we change the units of measurement for _Age_ from years to days. What effect would that have on $\beta_2$? This is an important reminder about interpreting the absolute magnitude of the coefficients. 
+f) Suppose we have two new predictors related to ranking in high school. Let $X_3$ be the state-wide rank of the high school that the student attended. Let $X_4$ be the class rank of the student within their high school class. Which predictor do you suspect would be more impactful and why?
+
+## Exercise
+Use R's lm() methods to fit a regression model on the Boston housing dataset. In particular, try to predict *medv* using *tax* and *rad* and *dis*.
+
+1. Which of these predictors are categorical and which are continuous?
+2. Which predictors seems to be important for this prediction?
+3. Compare different models where you use only 1 predictors in each. How does R-squared change?
+
+```{r}
+library(ISLR)
+library(MASS)
+```
+
+##  Interactions
+
+The previous model assumed that the all predictors are *additive* in their impact on the target varable. That is, they each contribute independently of one another. If want to relax that assumption, we can add *interaction* terms to our regression.
+
+$$
+GPA = \beta_0 + \beta_1 Age + \beta_2 Female + \beta_3 Age*Female
+$$
+
+Again, it is helpful the reason about this by breaking up our regression equation into a piecewise function (because one of our variables is binary).
+
+$$
+GPA = (if Female) \beta_0 + \beta_1 Age + \beta_2 Female + \beta_3 Age*Female \\
+GPA = (if Male) \beta_0 + \beta_1 Age
+$$
+
+rearranging the above
+
+$$
+GPA = (if Female) (\beta_0 + beta_2) + (\beta_1 + beta_3) Age \\
+GPA = (if Male) \beta_0 + \beta_1 Age
+$$
+
+So we see that the impact of the binary variable (Female) occurs in two places. Not only does it change the intercept from $\beta_0$ to $(\beta_0 + \beta_1)$ but it also affects the slope of the GPA~Age relantionship by changing the slope from $\beta_1$ to $(\beta_1 + \beta_3)$. In fact, depending on the magnitudes and signs of $\beta_1$ and $\beta_3$, the impact of GPA~Age can be completely different for Males vs Females - even the sign of the effect can change. See Figure 3.7 in the book.
+
+Doing interactions in R is simple: 
+
+```{r}
+lm(medv ~ tax + rad + tax*rad, data=Boston)
+```
+
+The *hierarchical principle* states that if we include an interaction in a model, then we should also include each of the main effects, even if they individually are not statistically significant.
+
+##  Multiple Regression, Multiple Comparisons
+With hypothesis testing, we tend to calculate p-values of some test statistic and then have some "acceptable" p-threshold that allows us to quantify the probabilty of a Type 1 error. A threshold of p=.05 is a common bar for establishing statistical significance, and this means we allow ourselves a 5% chance of falsely rejecting the null hypothesis. 
+
+But with Multiple Regression, we're conducting many hypothesis tests simultaneously - for every predictor variable, we're trying to establish where $\beta_j$ is nonzero, and we just p-values to make these quantifications. But if we have very many predictors, we're doing very many parallel hypothesis tests and our Type I error rate rises. 
+
+```{r}
+data_df <- data.frame(matrix(rnorm(500*101) , 500,101 ))
+names(data_df)[101] <- c("Y")
+fit <- lm(Y~.,data_df)
+summary(fit)
+```
+
+In this completely uncorrelated dataset, we see several of the fitted Betas are highly statistically significant. This is not because of any real relationships between X and Y, but simply due to chance. 
+
+  
+##  Nonlinear Transformations of Predictors  
+```{r}
+Advertising <- read.csv("./Advertising.csv")
+plot(Advertising$Sales, Advertising$TV)
+plot(Advertising$Sales, sqrt(Advertising$TV))
+testlm <- lm(Sales ~ TV + sqrt(TV), data = Advertising)
+summary(testlm)
+
+# Try a few other nonlinear transformations and interactions.
+
+testlm <- lm(Sales ~ sqrt(TV) + Radio + Newspaper, data = Advertising)
+summary(testlm)
+
+testlm <- lm(Sales ~ sqrt(TV) + Radio + sqrt(TV*Radio), data = Advertising)
+
+testlm <- lm(Sales ~ sqrt(TV) +  sqrt(TV*Radio) + sqrt(Newspaper), data = Advertising)
+
+testlm <- lm(Sales ~ TV + Newspaper/(Radio+1), data = Advertising)
+
+```
+
+##  Group exercise, Polynomial Regression
+In this exercise, we'll explore polynomial regression techniques for fitting nonlinear data. 
+
+1. Generate a synthetic dataset where $y$ is drawn from a quadratic polynomial of $x$ with additional of Gaussian noise. 
+
+2. Write a function that takes in a matrix $X$ and a vector $Y$ and returns the OLS solution for the betas. Do this using the explicit formula, $(X^{T}X)^{-1}X^{T}Y$. 
+
+3. Construct a design matrix $X$ for a simple model $Y = \beta_0 + \beta_1 X$. Remember: there are two columns in the design matrix, what is in the column corresponding to $\beta_0$?
+
+4. Solve the simple model using your OLS function. Evaluate the model parameters as well as how "well" the model captures the variance in the data (compute RSS).
+
+5. Create a new model matrix $X$ with a new predictor column corresponding to $x^2$. Solve this model. Do your estimated Betas match up with the true Betas.
+
+6. If time permitting, redo this exercise with "less noisy" $y$ data and refit the quadratic model. Verify that the estimated Betas are aligned with what you expect. 
+
+##  Autoregression
+We won't spend much time this semester going over time series methods, but there's a simple method we can employ using just the knowledge we have of Multiple Regression. Consider a time series of temporally-ordered observations $X_1, X_2,...,X_{t-1}, X_t, X_{t+1},...$. Our goal is make accurate predictions of the future given our past observations. 
+
+In an Autoregression Model of order $K$, our prediction of each time point $X_{t}$ is that of a weighted, linear combinations of $K$ previous time steps:
+
+$$
+X_{t} = \beta_0 + \sum_{i=1}^K \beta_i X_{t-i} + \epsilon.
+$$
+
+This time series method takes exactly the same form as multiple regression, but where we've created predictors that are simply $K$-step lookbacks. We then estimate coefficients in the usual way. 
+
+The simplest version is an order-1 model, denoted $AR(1)$, where we consider only a single time step lookback.
+
+
+**A.** Use R's **load** function to import the dataset _retail.RData_. This data represents a time series of retail sales totals over a period of many years. The column _UnadjustedSales_ records the raw dollar amount of sales that occur in a given month. The column _AdjustedSales_ has taken into account the seasonality of retail sales and controlled for the month of the year. We will build an $AR(2)$ model of the _UnadjustedSales_.
+
+**B.** Create a new dataframe that will have three columns, representing $X$, $X_{t-1}$, and $X_{t-2}$. Note we'll have to reduce the total number of rows of this new data frame so that it has two fewer rows than our original time series. 
+
+
+**C.** Compute the autoregression using something like **lm(Y ~ X1 + X2, data = timeseries)**. How well did the model do?
+
+**D.** Repeat with the _AdjustedSales_ time series. Did we do better? Think back on what we've learned about interaction terms, how could we have done a monthly adjustment in the first model?
+
+**E.** There's a function called *ar()* in base R. Try it out and compare. 
+
+##5. Some Potential Problems
+  1. Nonlinearity of relationship 
+    * Make sure to look at residuals
+  2. Correlated errors
+    * Make sure to look at residuals
+  3. Non-constant errors (Heteroskedasticity)
+    * Make sure to look at residuals
+  4. Outliers
+  5. High Leverage Points
+  6. Collinearity
+  
+  R provides many helpful diagnostic plots so we can evaluate the results of a linear regression model. These include
+  
+    * residuals plot
+    * QQ plot of residuals
+    * Scale-location plot
+    * Leverage plot
+    
+Let's take a look at these diagnostic plots and get an understanding of them. First, we'll generate some simple data which has no obvious problems.
+  
+```{r}
+
+x <- 1:20
+y = 1 + 2*x + rnorm(20)
+fit1 = lm(y ~ x)
+summary(fit1)
+
+plot(fit1)
+```
+
+Now we'll add a another data point which has high leverage.
+```{r}
+# Now we add a high-leverage point
+X = matrix(c(rep(1,10),1:10),ncol = 2)
+X[10,2] = 20
+y = X[,2] + rnorm(10)
+plot(X[,2],y)
+myfit = lm(y ~ X[,2])
+abline(myfit, col = 2)
+
+plot(myfit)
+# notice that the new point has leverage of nearly 1, and residual of nearly 0.
+# It will "pull the the squares line towards its observation".
+# Therefore, its residual is typically not very large.
+
+```
+
+
+Collinearity
+
+```{r}
+delta = .1
+x1 = rnorm(100)
+x2 = x1 + delta*rnorm(100)
+cor(x1,x2)
+
+# Now make a response that depends on both predictors.
+
+y <- 1 + 2*x1 + 3*x2 + rnorm(100)
+fit0 <- lm(y ~ x1+x2)
+summary(fit0)
+
+
+```
+Note R^2 and F for the total model. Yet one of the predictors has low t-score and p-value. And also, look at the estimated coefficients. Collinear predictors can result in mis-estimation of the coefficients. 

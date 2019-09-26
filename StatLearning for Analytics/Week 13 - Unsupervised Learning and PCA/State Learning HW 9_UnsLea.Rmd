@@ -1,0 +1,361 @@
+---
+title: "Statistical Learning HW 9 - Unsupervised Learning"
+author: "Christian Conroy"
+date: "April 29, 2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+```{r setup, include=FALSE}
+require(knitr)
+require(pROC)
+require(ROCR)
+require(dbscan)
+require(MASS)
+require(e1071)
+require(ISLR)
+require(mlbench)
+require(caret)
+require(dplyr)
+require(readxl)
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics")
+```
+
+3 points
+# Extra 67 (3 points)
+
+Make 500 smiley data points with sd1 = sd2 = 0.2.
+
+```{r,echo=T, results='hide'}
+set.seed(1)
+smiley <- mlbench.smiley(n=500, sd1 = 0.2, sd2 = 0.2)
+```
+
+(a) Demonstrate with a colored plot that k-means with four clusters is incapable of recovering the four original clusters exactly. Do another run of k-means and use a confusion matrix to show that the four original clusters are not recovered exactly.
+
+```{r}
+# Run K Means
+set.seed(1)
+km.out <- kmeans(smiley$x,4,nstart=15)
+
+# Set plots on same page
+par(mfrow = c(1,2))
+# Plot the original clusters 
+plot(smiley$x[,1],smiley$x[,2], col = smiley$classes, main = "Original Four Clusters", xlab = "X1", ylab = "X2")
+# Plot New Clusters 
+plot(smiley$x[,1],smiley$x[,2], col = km.out$cluster, main = "k-means Four Clusters", xlab = "X1", ylab = "X2")
+
+```
+
+(b) Try to use hierarchical clustering with a suitable choice of linkage to recover the four clusters. Explain your choice of linkage. Use a confusion matrix to show whether this attempt is successful.
+
+```{r}
+# Complete Linkage 
+clust.complete <- hclust(dist(smiley$x),method="complete")
+clust.complete.cut <- cutree(clust.complete,4)
+
+# Complete Linkage 
+clust.single <- hclust(dist(smiley$x),method="single")
+clust.single.cut <- cutree(clust.single,4)
+```
+
+```{r}
+# Set plots on same page
+par(mfrow = c(1,3))
+# Plot the original clusters 
+plot(smiley$x[,1],smiley$x[,2], col = smiley$classes, main = "Original Four Clusters", xlab = "X1", ylab = "X2")
+# Plot HC with Complete Linkage
+plot(smiley$x[,1],smiley$x[,2], col = clust.complete.cut, main = "HC Complete Four Clusters", xlab = "X1", ylab = "X2")
+# Plot HC with Single Linkage
+plot(smiley$x[,1],smiley$x[,2], col = clust.single.cut, main = "HC Single Four Clusters", xlab = "X1", ylab = "X2")
+```
+```{r}
+# For single linkage
+confusionMatrix(table(smiley$classes, clust.single.cut))
+# For complete linkage
+confusionMatrix(table(smiley$classes, clust.complete.cut))
+```
+
+Hierachical Clustering with single linkage appears to best replicate the original clusters. Because single linkage tends to yield trailing clusters as opposed to complete linkage which yields more balanced attractive, clusters, single linkage here is better able to capture the smile part in the scatter plot. 
+
+# Book 2 (3 points)
+
+Suppose that we have four observations, for which we compute a dissimilarity matrix.
+
+For instance, the dissimilarity between the first and second observations is 0.3, and the dissimilarity between the second and fourth observations is 0.8.
+
+(a) On the basis of this dissimilarity matrix, sketch the dendrogram that results from hierarchically clustering these four observations using complete linkage. Be sure to indicate on the plot the height at which each fusion occurs, as well as the observations corresponding to each leaf in the dendrogram.
+
+```{r}
+d <- as.dist(matrix(c(0, 0.3, 0.4, 0.7, 
+                     0.3, 0, 0.5, 0.8,
+                     0.4, 0.5, 0.0, 0.45,
+                     0.7, 0.8, 0.45, 0.0), nrow = 4))
+plot(hclust(d, method = "complete"))
+
+```
+
+(b) Repeat (a), this time using single linkage clustering.
+
+```{r}
+
+plot(hclust(d, method = "single"))
+
+```
+
+(c) Suppose that we cut the dendogram obtained in (a) such that two clusters result. Which observations are in each cluster?
+
+1 and 2 in cluster 1 and 3 and 4 in cluster 2
+
+(d) Suppose that we cut the dendogram obtained in (b) such that two clusters result. Which observations are in each cluster?
+
+1, 2, and 3 in cluster 1 and 4 in cluster 2
+
+(e) It is mentioned in the chapter that at each fusion in the dendrogram, the position of the two clusters being fused can be swapped without changing the meaning of the dendrogram. Draw a dendrogram that is equivalent to the dendrogram in (a), for which two or more of the leaves are repositioned, but for which the meaning of the dendrogram is the same.
+
+```{r}
+
+plot(hclust(d, method = "complete"), labels = c(2,1,4,3))
+
+```
+
+- # Extra 72 (3 points)
+
+Consider the concrete strength data from problem 37. There are eight numerical predictors and one numerical response. Load the data and split them into a training and test set (70% / 30%). We want to predict strength.
+
+```{r message = FALSE}
+# Load in Data
+concrete <- read_excel("Concrete_Data.xls")
+# Clean up names 
+colnames(concrete) <- c("cementkg", "blustfur", "flyash", "water", "superplas", "courseagg", "fineagg", "age", "CCS")
+
+# Create Train and Test
+train <- sample(nrow(concrete),(nrow(concrete) * .70), replace = FALSE)
+concrete_train <- concrete[train,]
+concrete_test <- concrete[-train,]
+```
+
+a) Compute the principal components of the matrix of predictors for the training set. Fit a linear model
+to predict strength from the first principal component (simple regression).
+
+```{r message = FALSE}
+# Create Matrix of Predictors 
+x <- model.matrix(CCS ~ .-1, concrete_train)
+
+# Compute PC
+pr.out <- prcomp(x, scale=TRUE)
+
+# Fit LM fromm first PC
+train.data <- data.frame(CCS = concrete_train$CCS, pr.out$x)
+train.data <- train.data[,1:2]
+reg <- lm(CCS ~ ., data = train.data)
+summary(reg)
+
+
+```
+
+b) Make predictions for the test set, using the same model. You have to use the loading vectors which
+were found from the principal component analysis of the training data.
+
+```{r message = FALSE}
+test.data <- predict(pr.out, newdata = concrete_test)
+test.data <- data.frame(CCS = concrete_test$CCS, test.data)
+test.data <- test.data[,1:2]
+
+predict(reg, test.data)
+
+```
+
+# Book 9 (5 points)
+
+Consider the USArrests data. We will now perform hierarchical clustering on the states.
+
+```{r}
+data('USArrests')
+head(USArrests)
+```
+
+(a) Using hierarchical clustering with complete linkage and Euclidean distance, cluster the states.
+
+```{r}
+x <- dist(USArrests)
+clust.complete.euc <- hclust(x, method = "complete")
+
+```
+
+(b) Cut the dendrogram at a height that results in three distinct clusters. Which states belong to which clusters?
+
+
+```{r}
+# Complete Linkage 
+clust.complete.euc.cut <- cutree(clust.complete.euc,3)
+clust.complete.euc.cut
+```
+
+(c) Hierarchically cluster the states using complete linkage and Euclidean distance, after scaling the variables to have standard deviation one.
+
+```{r}
+
+scaleddata <- scale(USArrests)
+sx <- dist(scaleddata)
+sclust.complete.euc <- hclust(sx, method = "complete")
+sclust.complete.euc.cut <- cutree(sclust.complete.euc,3)
+sclust.complete.euc.cut
+```
+
+
+(d) What effect does scaling the variables have on the hierarchical clustering obtained? In your opinion, should the variables be scaled before the inter-observation dissimilarities are computed? Provide a justification for your answer.
+
+Because statistics for each category of the US Arrests data are reported differently (percent out of an amount of the population versus the number of recorded incidents), the units are different and one variable therefore may have a disproportionate affect on the inter-state dissimilarities, which in turn influences the clustering. Scaling before the dissimilarities are computed is usually best because it gives equal importance to the hierarchical clustering performed. However, this is not always the case as it may give a variable a much greater or smaller effect on the inter-observation dissimilarities obtained. It therefore depends on the application.  
+
+# Extra 69 (5 points)
+
+In this problem, you will use k-means clustering for the smiley data, for different values of sd = sd1 = sd2. Use 500 points and four clusters throughout.
+
+a) Demonstrate that for small values of sd k-means clustering recoversthe four clusters in the data
+reasonably well. Use confusion matrices to show this.
+
+
+```{r message = FALSE, warning = FALSE}
+
+sdops <- c(0.001, 0.01, 0.1, 1)
+
+kmsds <- function(x) {
+  # Generate Data
+  set.seed(1)
+  smiley <- mlbench.smiley(n=500, sd1 = x, sd2 = x)
+  # Run K Means
+  set.seed(1)
+  km.out <- kmeans(smiley$x,4)
+  return(confusionMatrix(table(smiley$classes, km.out$cluster)))
+}
+
+sdtest <- lapply(sdops, kmsds)
+
+sdtest
+
+```
+The accuracy as reported by the Confusion Matices decreases as we increase the value of sd, proving that lower values of sd are better at recovering the original clusters.
+
+b) Show that if sd becomes larger, the four clusters are no longer recovered well. Find an approximate
+value of sd for which this change occurs (two decimal digits is enough), and explain how k-means clustering behaves for larger values of sd, using colored plots and two different examples.
+
+```{r message = FALSE, warning = FALSE}
+
+sdops <- c(0.01, 0.06, 0.07)
+
+kmsds <- function(s) {
+  # Generate Data
+  set.seed(1)
+  smiley <- mlbench.smiley(n=500, sd1 = s, sd2 = s)
+  # Run K Means
+  set.seed(1)
+  km.out <- kmeans(smiley$x,4)
+  return(confusionMatrix(table(smiley$classes, km.out$cluster)))
+}
+
+sdtest <- lapply(sdops, kmsds)
+
+sdtest
+
+par(mfrow = c(2,2))
+# Generate Data at sd of 0.06
+set.seed(1)
+smiley <- mlbench.smiley(n=500, sd1 = 0.06, sd2 = 0.06)
+# Plot the original clusters at sd of 0.06
+plot(smiley$x[,1],smiley$x[,2], col = smiley$classes, main = "Original Four Clusters - 0.06 sd", xlab = "X1", ylab = "X2")
+# Plot New Clusters at sd of 0.06
+plot(smiley$x[,1],smiley$x[,2], col = km.out$cluster, main = "k-means Four Clusters - 0.06 sd", xlab = "X1", ylab = "X2")
+
+ # Generate Data at sd of 0.07
+set.seed(1)
+smiley <- mlbench.smiley(n=500, sd1 = 0.5, sd2 = 0.5)
+# Plot the original clusters at sd of 0.07
+plot(smiley$x[,1],smiley$x[,2], col = smiley$classes, main = "Original Four Clusters - 0.5 sd", xlab = "X1", ylab = "X2")
+# Plot New Clusters at sd of 0.07
+plot(smiley$x[,1],smiley$x[,2], col = km.out$cluster, main = "k-means Four Clusters - 0.5 sd", xlab = "X1", ylab = "X2")
+
+```
+We start to see the accuracy decline in moving from an sd of 0.06 to an sd of 0.07. To make the point that the accuracy declines for larger sds, we use plots to exagerrate this trend. 
+
+# Extra 71 (5 points)
+This problem uses the MNIST image classification data, available as mnist_all.RData that were used earlier. We use the training data only for all digits. Extract the training data and place them in suitable data frames.
+
+```{r message = FALSE}
+mnist <-load('mnist_all.RData')
+
+mnist_train <- data.frame(train$x, train$y)
+
+```
+
+a) Apply k-means clustering with two clusters. Can you tell which digits tend to be clustered together?
+
+```{r message = FALSE}
+
+km.out <- kmeans(mnist_train$train.y,2,nstart=25)
+mnist_train$cluster <- km.out$cluster
+
+clustertabs <- mnist_train %>%
+  group_by(train.y) %>%
+dplyr::summarize(Cluster = mean(cluster))
+
+clustertabs
+
+```
+The first 5 digits chronologically were put in cluster 1 and the next 5 in cluster 2. 
+
+b) Apply k-means clustering with 10 clusters. How well do the cluster labels agree with the actual digits
+labels? Use a confusion matrix to answer this question.
+
+```{r message = FALSE}
+
+km.out <- kmeans(mnist_train$train.y,10,nstart=25)
+mnist_train$cluster <- km.out$cluster
+
+# Mismatch due to the existance of the digit 0 and cluster 10 - Eliminate those two levels and compare
+mnist_train2 <- mnist_train[mnist_train$train.y != 0 | mnist_train$cluster != 10,]
+
+# Confusion Matrix - Done manually because there is at least one number that is not predicted
+table(factor(mnist_train2$cluster, levels=min(mnist_train2$train.y):max(mnist_train2$train.y)), 
+      factor(mnist_train2$train.y, levels=min(mnist_train2$train.y):max(mnist_train2$train.y)))
+
+# Accuracy
+sum(mnist_train2$cluster == mnist_train2$train.y) / nrow(mnist_train2)
+
+```
+Accuracy is 0.0992, which is not great. 
+
+c) Apply dbscan clustering, with suitable choices of eps and minPtsobtained from a k-nearest neighbor
+plot. Justify your choices.Then determine how well the cluster labels agree with the actual digit labels,
+using a confusion matrix.
+
+```{r}
+# Downsample to decrease kNNdistplot runtime 
+downsamp <- seq(1, ncol(mnist_train), 16)
+train2 <- mnist_train[ downsamp]
+names(train2)
+
+kNNdistplot(as.matrix(train2[,-50]), k=4)
+
+```
+
+```{r}
+dbscan_clust <- dbscan(as.matrix(train2[,-50]), eps=300)
+```
+
+```{r}
+# Mismatch due to the existance of the digit 0 and cluster 10 - Eliminate those two levels and compare
+#mnist_train2 <- mnist_train[mnist_train$train.y != 0 | mnist_train$cluster != 10,]
+
+# Confusion Matrix - Done manually because there is at least one number that is not predicted
+table(factor(dbscan_clust$cluster, levels=min(train2$train.y):max(train2$train.y)), 
+      factor(train2$train.y, levels=min(train2$train.y):max(train2$train.y)))
+
+# Accuracy
+sum(dbscan_clust$cluster == train2$train.y) / nrow(train2)
+```
+The kink in the 4-NN distance plot appears to be located approximately at 300, so we use this for eps. We find an accuracy of 0.118.

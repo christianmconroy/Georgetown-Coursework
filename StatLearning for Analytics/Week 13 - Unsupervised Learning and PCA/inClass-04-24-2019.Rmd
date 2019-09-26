@@ -1,0 +1,279 @@
+---
+title: "In Class 04-24-2019"
+output: html_document
+---
+
+```{r}
+library(MASS)
+require(jpeg)
+require(softImpute)
+# install.packages('pls')
+library(pls)
+library(ISLR)
+# install.packages('jpeg')
+library(jpeg)
+```
+
+
+# Principle Component Analysis
+
+PCA creates a new set of features (a new coordinate system) which are each a linear combination of the original features. The goal here is to (i) capture most of the "structure" in the data with a relatively low-dimensional linear subspace and (ii) potentially use the new low-D feature space as a remedy for the curse of dimensionality. 
+ 
+## Geometric Interpretation
+In which direction(s) does the data vary the most? Can we create a new coordinate system that emphasizes those directions instead of the original measured features? 
+
+```{r}
+set.seed(123)
+x <- mvrnorm(n=100, mu=c(3,3), Sigma=matrix(c(.2,2,.1,.2), byrow=TRUE,nrow=2) )
+plot(x, xlim=c(0,5),ylim=c(0,5))
+abline(0,1,col='red')
+```
+
+We can also think of the first principle component at the linear subspace that is "closest" to the data. Quite similar to regression in that sense. 
+
+Terminology: 
+
+  * Loadings
+  * Scores
+  * Proportion of Variance explained
+  * Scree plot
+  * biplot (this is an R function)
+
+## Algebraic Interpretation
+
+### Diagonalization of Covariance Matrix
+From the covariance matrix of $X$, $C = \frac{1}{n-1} X^{\textrm{T}}X$. The eigenvectors of the covariance matrix are the principle components because they point in the directions of the strongest variance of the data.
+
+1. Mean center the data
+2. compute Covariance $X'X$
+3. Compute eigenvectors of covariance matrix
+
+
+```{r}
+x <- mvrnorm(n=100, mu=c(3,3), Sigma=matrix(c(.2,2,.1,.2), byrow=TRUE,nrow=2) )
+x_centered = x - c(3,3)
+covariance_mat <- (1/99) * t(x_centered) %*% x_centered
+eig <- eigen(covariance_mat)
+eig$vectors
+
+plot(x_centered)
+abline(0, eig$vectors[1,1]/eig$vectors[2,1])
+
+```
+
+PCA can also be understood as the singular value decomposition of the data matrix X. Don't worry if you don't recall what SVD is, just understand it to be a generalization of eigen-decomposition to non-square matrices. 
+
+## Code
+Let's return to the r functions and gain some more intution about principle components, loadings, and scores.
+
+Load iris data and make pairs plot.
+```{r}
+ data("iris")
+head(iris)
+iris0 = iris[,-5]
+pairs(iris0,col = rep(2:4, each = 50), lwd = 3)
+```
+
+Compute principal components and make biplot.
+```{r}
+iris.pca = prcomp(iris0,scale=F)
+biplot(iris.pca, cex = .6)
+```
+
+Check what has been computed.
+```{r}
+names(iris.pca)
+iris.pca$sdev
+iris.pca$rotation
+```
+
+The first principal component is maximal for petal length. That is related to the fact that that variable has the largest variance (See the diagonal entry of the covariance matrix below).
+```{r}
+var(iris0)
+
+```
+
+Here are the other variables that are computed by \texttt{prcomp()}.
+```{r}
+iris.pca$center
+iris.pca$scale
+head(iris.pca$x)
+
+```
+
+The matrix in \texttt{iris.pca\$x} is obtained by subtracting the column means in \texttt{iris.pca\$center} from each column and multiplying the result from the right with the matrix in \texttt{iris.pcs\$rotation}. Check this for the first row:
+```{r}
+as.matrix(iris0[1,]-iris.pca$center)%*%as.matrix(iris.pca$rotation) - iris.pca$x[1,]
+
+```
+
+The first two entries of each row of \texttt{iris.pca\$x} are plotted in the biplot. The plot symbol is simply the row number. We checked this by looking at the coordinates for a few rows.
+```{r}
+iris.pca$x[42,1:2]
+iris.pca$x[16,1:2]
+
+```
+Make a plot of the first and second components of all observations, colored by species.
+```{r, fig.width=4}
+plot(iris.pca$x[,1],iris.pca$x[,2],col = rep(2:4, each = 50), lwd = 3)
+```
+
+We then repeated all this with scaling turned on, i.e.
+```{r, fig.width = 4}
+iris.pca1 = prcomp(iris0,scale=T)
+plot(iris.pca1$x[,1],iris.pca1$x[,2],col = rep(2:4, each = 50), lwd = 3)
+```
+
+
+
+## Image Example
+```{r}
+#define a couple useful functions
+set.seed(123)
+imagegray = function(A){image(A,col = gray((0:255)/256))} # plot grayscale image
+mytrunc = function(x, top = 1, bot = 0){pmax(pmin(x,top),bot)} 
+```
+
+
+Make sure that the JPEG files \texttt{melencolia.ppg} and \texttt{MelencoliaDetail.jpg} are in the same directory as this .Rmd file. 
+
+Read a JPEG file, turn it into a grayscale file, rearrange rows so it can be plotted, and plot the image.
+```{r, fig.width=5, fig.height=6.25}
+A = readJPEG("melencolia.JPG")
+dim(A)
+A.gray = .2989*A[,,1] + .5870*A[,,2] + .1140*A[,,3]
+A.gray = t(A.gray[seq(dim(A.gray)[1],1,by = -1),])
+A.gray[1:5,1:5]
+imagegray(A.gray)
+```
+
+More on this engraving from 1514 may be found atat https://en.wikipedia.org/wiki/Melencolia_I.
+
+The grayscale matrix \texttt{A.gray} has all values between 0 and 1. Entries closer to 0 are plotted as darker pixels.
+
+Compute the singular value decomposition of the matrix and plot the logarithms of the singular values.
+```{r}
+A.svd = svd(A.gray)
+names(A.svd)
+plot(log10(A.svd$d), main = "Log singular values")
+grid(col = 2)
+
+```
+
+Approximate the grayscale matrix with a rank 30 approximation, obtained from the svd.
+```{r, fig.width=5, fig.height=6.25}
+k = 30
+A.approx = A.svd$u[,1:k]%*%diag(A.svd$d[1:k])%*%t(A.svd$v[,1:k])
+imagegray(A.approx+1/2)
+```
+
+ The \texttt{image} function rescales entries in the matrix so that they lie between 0 and 1 and then plots a grayscale image. As it turns out, the approximating matrix has many entries $>1$. The overall effect is that contrast is reduced. We can restore contrast by truncating the approximating matrix and then plotting it. we can also plot the difference between the correct and the approximating matrix. This shows that the approximation leaves out a lot of detail, in particular small-scale features and edges.
+```{r, fig.width=5, fig.height=6.25}
+imagegray(mytrunc(A.approx))
+imagegray(A.gray-A.approx)
+
+```
+
+Redo this with a rank 100 approximation. A lot more detail  is now visible.
+
+```{r, fig.width=5, fig.height=6.25}
+k = 100
+A.approx = A.svd$u[,1:k]%*%diag(A.svd$d[1:k])%*%t(A.svd$v[,1:k])
+imagegray(mytrunc(A.approx))
+
+```
+
+Now work with an image detail (the magic square). A rank 2 approximation preserves the boxes quite faithfully. A rank 50 approximation allows us to read all figures in the magic square and shows details of the wing, but fine detail (diagonal hashmarks in the square) are largely left out.
+```{r,fig.width=5, fig.height=5.2}
+A = readJPEG("melencoliaDetail.JPG")
+A.gray = .2989*A[,,1] + .5870*A[,,2] + .1140*A[,,3]
+A.gray = t(A.gray[seq(dim(A.gray)[1],1,by = -1),])
+imagegray(A.gray)
+A.svd = svd(A.gray)
+k = 2
+A.approx = A.svd$u[,1:k]%*%diag(A.svd$d[1:k])%*%t(A.svd$v[,1:k])
+imagegray(mytrunc(A.approx))
+k = 50
+A.approx = A.svd$u[,1:k]%*%diag(A.svd$d[1:k])%*%t(A.svd$v[,1:k])
+imagegray(mytrunc(A.approx))
+```
+
+## Completing a matrix with missing entries
+
+Take a grayscale matrix and delete 50% of all entries. Now the figures are difficult to read.
+```{r,fig.width=5, fig.height=5.2}
+A.inc = A.gray
+pixels = dim(A.inc)[1]*dim(A.inc)[2]
+deleteratio = .5
+incomplete = sample(pixels, deleteratio*pixels, replace = F)
+A.inc[incomplete] <- NA
+imagegray(A.inc)
+```
+
+Use the \texttt{softImpute()} function to fill in the missing entries. Here, we assume that the filled in matrix has rank 100.
+```{r, fig.width=5, fig.height=5.2}
+A.completion = softImpute(A.inc, rank.max = 100)
+names(A.completion)
+A.comp = A.completion$u%*%diag(A.completion$d)%*%t(A.completion$v)
+imagegray(mytrunc(A.comp))
+
+```
+
+The figures are readable again, and even some of the diagonal stripes are visible. 
+
+Now delete a systematic portion of the image. The algorithm is not capable of recovering the lost detail.
+```{r, fig.width=5, fig.height=5.2}
+ A.inc.1 = A.gray
+A.inc.1[450:500,50:100] <- NA
+A.completion = softImpute(A.inc.1, rank.max = 200)
+A.comp.1 = A.completion$u%*%diag(A.completion$d)%*%t(A.completion$v)
+imagegray(mytrunc(A.comp.1))
+
+```
+
+# Principle Component Regression
+This topic appeared in Chapter 6, but makes more sense to discuss it now. 
+
+```{r}
+head(Hitters)
+```
+
+Let's focus on just the first several numeric columns, and we'll try to predict Salary from the rest, as we've done before
+
+```{r}
+hitters_df <- Hitters[,c(1:9,19)]
+head(hitters_df)
+```
+
+Notice that many of these predictors are highly correlated. What is the problem with having correlated predictors?
+
+```{r}
+cor(hitters_df[,1:9])
+```
+
+We'll use Principal Components Regression to first transform the predictors into a new set of orthogonal predictors.
+```{r}
+pcr.fit=pcr(Salary ~ ., data=Hitters ,scale=TRUE, validation ="CV")
+
+summary(pcr.fit)
+names(pcr.fit)
+
+# performed cross-validation to help select the number of princ comps we should keep
+plot(MSEP(pcr.fit))
+
+# other helpful visualizations
+plot(pcr.fit,ncomp=3)
+plot(pcr.fit, "scores") # plot the data points in the first two PCs
+plot(pcr.fit, "loadings")
+```
+
+
+# Exercise
+
+Using the College data, we'll apply Principle Component Regression to try to predict the variable "Accept".
+
+1. Get a baseline for comparison - Use a linear model with all the features included and try to predict the "Accept" feature. 
+
+2. Use 'pcr()' to predict the variable Accept. From the summary() output, approximately how many principle components are needed to explain 90% of the variance of 'Accept'?
+
+3. Visualize the MSEP versus number of components included in the model. 

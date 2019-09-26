@@ -1,0 +1,556 @@
+---
+title: "Statistical Learning HW 9 - Unsupervised Learning"
+author: "Christian Conroy"
+date: "April 29, 2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+```{r setup, include=FALSE}
+require(knitr)
+require(ggplot2)
+require(reshape2)
+require(gridExtra)
+require(statar)
+require(nnet)
+require(randomForest)
+require(pROC)
+require(tree)
+require(e1071)
+require(dplyr)
+library(gridExtra)
+require(caret)
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics")
+```
+
+# Part I: Bikeshare Ridership
+
+The first part of the exam uses data on hourly ridership counts for the Capital Bikeshare system in Washington, DC for the years 2011 and 2012. Use the data frame cabi. The data frame contains time related variables and weather related variables, plus two numerical target variables. Each observation contains data for one hour during these two years, with a few gaps.
+
+```{r}
+cabi <- read.csv("cabi.csv", stringsAsFactors = FALSE)
+head(cabi)
+```
+
+Problem 1 (20)
+Use numerical summaries, graphs, etc. to answer the following questions. No model fitting or other statistical procedures are required for this. Each graph should help answer one or more of these questions and should be accompanied by explanations.
+
+(a) How do ridership counts depend on the year? The month? The hour of the day? How do casual and
+registered riders differ in this respect?
+
+```{r}
+# Year 
+yeardf <- cabi %>%
+  group_by(year) %>%
+  dplyr::summarize(Casual = sum(casual),
+                   Registered = sum(registered))
+
+yeardf <- melt(data.frame(yeardf), id.vars = 'year')
+
+ggplot(yeardf, aes(x=factor(year), y=value, fill=variable)) + geom_bar(stat='identity', position='dodge') + labs(title = "Ridership by Year by Casual and Registered", x = "Year", y = "Count", fill = "Rider Status") + scale_y_continuous(labels = scales::comma)
+
+# Month 
+# MonthYear
+cabi$month <- sprintf("%02d",cabi$month)
+cabi$yearmonth <- zoo::as.yearmon(paste(cabi$year, cabi$month), "%Y %m")
+
+yearmonthdf <- cabi %>%
+  group_by(yearmonth) %>%
+  dplyr::summarize(Casual = sum(casual),
+                   Registered = sum(registered))
+
+yearmonthdf <- melt(data.frame(yearmonthdf), id.vars = 'yearmonth')
+
+a <- ggplot(yearmonthdf, aes(x=factor(yearmonth), y=value, fill=variable)) + geom_bar(stat='identity') + labs(title = "Ridership by Month by Casual and Registered", x = "Month", y = "Count", fill = "Rider Status") + scale_y_continuous(labels = scales::comma) + theme(axis.text.x=element_text(angle=45,hjust=1,size=10)) 
+
+# Avg. Month 
+monthdf <- cabi %>%
+  group_by(month) %>%
+  dplyr::summarize(Casual = mean(casual),
+                   Registered = mean(registered))
+monthdf$month <- month.abb[as.numeric(monthdf$month)]
+monthdf <- melt(data.frame(monthdf), id.vars = 'month')
+
+b <- ggplot(monthdf, aes(x=factor(month), y=value, fill=variable)) + geom_bar(stat='identity') + labs(title = "Ridership by Month by Casual and Registered - Average", x = "Month", y = "Count", fill = "Rider Status") + scale_y_continuous(labels = scales::comma) + theme(axis.text.x=element_text(angle=45,hjust=1,size=10))
+
+grid.arrange(a, b, nrow = 2, ncol=1)
+#dev.off()
+
+# Avg. Hour of the day
+hrdf <- cabi %>%
+  group_by(hr) %>%
+  dplyr::summarize(Casual = mean(casual),
+                   Registered = mean(registered))
+
+hrdf <- melt(data.frame(hrdf), id.vars = 'hr')
+
+ggplot(hrdf, aes(x=factor(hr), y=value, fill=variable)) + geom_bar(stat='identity') + labs(title = "Ridership by Hour by Casual and Registered - Average", x = "Hour", y = "Count", fill = "Rider Status") + scale_y_continuous(labels = scales::comma) + theme(axis.text.x=element_text(angle=45,hjust=1,size=10))
+
+```
+
+Ridership overall increased between 2011 and 2012, though as the monthly breakdown shows, the increase was concentrated in the warmer months of the respective years. 
+
+(b) How are casual and registered ridership counts related? Does this depend on the year? Does it depend
+on the type of day (working day or not)?
+
+```{r}
+wddf <- cabi %>%
+  group_by(wday) %>%
+  dplyr::summarize(Casual = mean(casual),
+                   Registered = mean(registered))
+
+wddf <- melt(data.frame(wddf), id.vars = 'wday')
+
+ggplot(wddf, aes(x=factor(wday), y=value, fill=variable)) + geom_bar(stat='identity') + labs(title = "Comparison of Casual and Registered on Workday and Weekend", x = "Workday", y = "Count", fill = "Rider Status") + scale_y_continuous(labels = scales::comma) 
+
+```
+
+Registered riderships are higher than casual riderships at every year, month, and hour period. As one might guess however, the amount of casual riderships appears to increase during warm tourism months, hours in the middle of the day outside of primary commuting hours, and on the weekend suggesting that individuals riding for reasons other than commute are more likely to ride casual. 
+
+(c) Is there an association between the weather situation and ridership counts? For casual riders? For
+registered riders?
+
+```{r}
+# Temperature 
+cabi$tempbin <- xtile(cabi$temp, 5)
+cabi$tempbin <- ifelse(cabi$tempbin == 1, "Very Cold", ifelse(cabi$tempbin == 2, "Cold", ifelse(cabi$tempbin == 3, "Mild", ifelse(cabi$tempbin == 4, "Hot", ifelse(cabi$tempbin == 5, "Very Hot", NA)))))
+cabi$tempbin <- factor(cabi$tempbin, levels = c("Very Cold","Cold","Mild", "Hot", "Very Hot"))
+
+tempdf <- cabi %>%
+  group_by(tempbin) %>%
+  dplyr::summarize(Casual = mean(casual),
+                   Registered = mean(registered))
+
+tempdf <- melt(data.frame(tempdf), id.vars = 'tempbin')
+
+c <- ggplot(tempdf, aes(x=factor(tempbin), y=value, fill=variable)) + geom_bar(stat='identity') + labs(title = "Relationship Between Temp and Ridership Counts", x = "Temperature Group", y = "Count", fill = "Rider Status") + scale_y_continuous(labels = scales::comma) 
+
+# Perceived Temperature 
+cabi$atempbin <- xtile(cabi$atemp, 5)
+cabi$atempbin <- ifelse(cabi$atempbin == 1, "Very Cold", ifelse(cabi$atempbin == 2, "Cold", ifelse(cabi$atempbin == 3, "Mild", ifelse(cabi$atempbin == 4, "Hot", ifelse(cabi$atempbin == 5, "Very Hot", NA)))))
+cabi$atempbin <- factor(cabi$atempbin, levels = c("Very Cold","Cold","Mild", "Hot", "Very Hot"))
+
+atempdf <- cabi %>%
+  group_by(atempbin) %>%
+  dplyr::summarize(Casual = mean(casual),
+                   Registered = mean(registered))
+
+atempdf <- melt(data.frame(atempdf), id.vars = 'atempbin')
+
+d <- ggplot(atempdf, aes(x=factor(atempbin), y=value, fill=variable)) + geom_bar(stat='identity') + labs(title = "Relationship Between Perceived Temp and Ridership Counts", x = "Temperature Group", y = "Count", fill = "Rider Status") + scale_y_continuous(labels = scales::comma)
+
+grid.arrange(c, d, nrow = 2, ncol=1)
+
+```
+Unsurprisingly, there is clear positive relationship between the temperature and ridership. 
+
+(d) There are relations between time related predictors and weather related predictors. Demonstrate this
+with a few suitable graphs.
+
+```{r}
+# Corr Plot
+timetemp <- data.frame(lapply(cabi[,c(4,6,7:10)], function(x) as.numeric(as.numeric(x))))
+cortemp <- round(cor(timetemp),2)
+melted_tempmonth <- melt(cortemp)
+e <- ggplot(data = melted_tempmonth, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()
+# Lines 
+mttp <- cabi %>%
+  group_by(month) %>%
+  dplyr::summarize(temp = mean(temp))
+
+# Line
+f <- ggplot(data = mttp, aes(x = factor(month), y = temp, group=1)) +geom_line() + labs(title = "Month and Temp Relationship", y = "Temperature", x = "Month") 
+
+grid.arrange(e, f, nrow = 2, ncol=1)
+
+```
+
+For problems 2-4, split the data into a training set (70%) and a test set (30%).
+
+```{r}
+# Split into train and test
+cabi$yearmonth <- NULL
+cabi$year <- as.factor(cabi$year)
+cabi$season <- as.factor(cabi$season)
+cabi$weather <- as.factor(cabi$weather)
+cabi$tempbin <- NULL
+cabi$atempbin <- NULL
+set.seed(12345)
+train <- sample(nrow(cabi),(nrow(cabi) * .70), replace = FALSE)
+
+cabi_train <- cabi[train,]
+cabi_test <- cabi[-train,]
+```
+
+Problem 2 (25)
+(a) Fit a multiple regression to predict registered ridership from the other variables (excluding casual
+ridership), using the training data. Identify the significant variables and comment on their coefficients.
+```{r}
+cabireg <- lm(registered ~ . -X -casual, data = cabi_train)
+summary(cabireg)
+```
+A few findings are surprising. First, there is a highly statistically significant positive effect for temperature, but perceived temperature is only statistically significant at the 10% level. Windspeed also surprisngly shows a statistically significant positive effect. The coefficients on the season factor variable are all positive and statistically significant, indicating that ridership suffers most from January to March. While we could have left month in as a numeric variable, given that it is likely not a linear relationship, we left it in as a factor. Surprisingly, there is no statistically significant effect for any month compared to January. 
+
+(b) Estimate the RMS prediction error of this model using the test set.
+
+```{r}
+#Predict on Test
+pred <- predict(cabireg, newdata = cabi_test)
+
+# Calc RMSE
+sqrt(mean((pred - cabi_test$registered)^2))
+```
+
+(c) Does the RMS prediction error depend on the month? Answer this question using the test data and
+suitable tables or graphs.
+
+```{r}
+subreg <- function(m) {
+  # Run Model
+  cabireg <- lm(registered ~ year + wday + hr + temp + atemp + hum + windspeed + weather, data = cabi_train[cabi_train$month == m,])
+  #Predict on Test
+  pred <- predict(cabireg, newdata = cabi_test[cabi_test$month == m,])
+  # Calc RMSE
+  a <- month.abb[as.numeric(m)]
+  b <- sqrt(mean((pred - cabi_test[cabi_test$month == m,]$registered)^2))
+  cbind(a,b)
+}
+
+mon <- unique(cabi$month)
+data <- lapply(mon, subreg)
+data1 <- do.call(rbind.data.frame, data)
+data1$b <- as.numeric(as.character(data1$b))
+
+ggplot(data=data1, aes(x=a, y=b)) + geom_bar(stat="identity") + labs(title = "RMSE by Month", x = "Month", y = "RMSE") 
+```
+It looks like RMSE may be better during the summer months. GO BACK AND ASSESS WITH THE CORRLATION.
+
+(d) Make copies of the training and test data in which hr is a categorical variable. Fit a multiple regression model. Compare the summary of this model to the one from part (a). Also estimate the RMS prediction error from the test set.
+
+```{r}
+cabireghr <- lm(registered ~ year + wday + factor(hr) + temp + atemp + hum + windspeed + weather + month, data = cabi_train)
+summary(cabireghr)
+
+#Predict on Test
+pred <- predict(cabireghr, newdata = cabi_test)
+
+# Calc RMSE
+sqrt(mean((pred - cabi_test$registered)^2))
+
+```
+
+When hour is included as a categorical variable, all months are statistically significant at some level but temperature becomes statistically insignificant. 
+
+Problem 3 (30)
+Use the original cabi data for this problem. 
+
+(a) Train artificial neural networks with various numbers of nodes in the hidden layer to predict registered ridership. Use the training data and only weather related variables. Recommend a suitable number of nodes, with explanation. 
+
+```{r}
+train_rmsr <- numeric()
+
+set.seed(1)
+for(i in 1:10) {
+  nn_fit <- nnet(registered ~ temp + atemp + hum + windspeed + weather, data= cabi_train, maxit = 2000, decay = .01,  size = i, linout= TRUE)
+  train_rmsr[i] <- sqrt(mean((predict(nn_fit, type = "r") - cabi_train$registered)^2))
+}
+
+train_rmsr <- data.frame(cbind(1:10, train_rmsr))
+ggplot(train_rmsr, aes(x = V1, y = train_rmsr, group = 1)) + geom_point(size = 1, alpha = 1, na.rm = TRUE) + geom_line()
+```
+While the RMSE continues to decline slightly through 10 nodes, there is only a tiny decrease in the RMSE between the model with 5 nodes and the model with 10 nodes, so we will choose the model with 5 nodes in order to get a model that both fits well and has a lower chance of overfitting. 
+
+(b) Repeat part (a), using only time related variables. 
+
+```{r}
+train_rmsr <- numeric()
+
+set.seed(1)
+for(i in 1:10) {
+  nn_fit <- nnet(registered ~ year + season + wday + hr + month, data= cabi_train, maxit = 2000, decay = .01,  size = i, linout= TRUE)
+  train_rmsr[i] <- sqrt(mean((predict(nn_fit, type = "r") - cabi_train$registered)^2))
+}
+
+train_rmsr <- data.frame(cbind(1:10, train_rmsr))
+ggplot(train_rmsr, aes(x = V1, y = train_rmsr, group = 1)) + geom_point(size = 1, alpha = 1, na.rm = TRUE) + geom_line()
+```
+
+While the RMSE continues to change throughout, there is only a tiny decrease in the RMSE between the model with 6 nodes and the model with 7 nodes, so we will choose the model with 6 nodes in order to get a model that both fits well and has a lower chance of overfitting. 
+
+(c) Repeat part (a), using two time related and two weather related variables. Explain your choice of variables.
+
+```{r}
+train_rmsr <- numeric()
+
+set.seed(1)
+for(i in 1:10) {
+  nn_fit <- nnet(registered ~ wday + month + temp + windspeed, data= cabi_train, maxit = 2000, decay = .01,  size = i, linout= TRUE)
+  train_rmsr[i] <- sqrt(mean((predict(nn_fit, type = "r") - cabi_train$registered)^2))
+}
+
+train_rmsr <- data.frame(cbind(1:10, train_rmsr))
+ggplot(train_rmsr, aes(x = V1, y = train_rmsr, group = 1)) + geom_point(size = 1, alpha = 1, na.rm = TRUE) + geom_line()
+```
+
+I chose those four variables as they showed the highest correlation with ridership in our initial exploratory data analysis. While the RMSE continues to change throughout, there is only a tiny decrease in the RMSE between the model with 4 nodes and the model with 8 nodes, so we will choose the model with 4 nodes in order to get a model that both fits well and has a lower chance of overfitting. 
+
+Problem 4 (10)
+What do you think are six useful predictors? Use any method you want to answer this question.
+
+```{r}
+rf.mod <- randomForest(registered ~ . -X -casual, data = cabi_train, importance =TRUE)
+varImpPlot(rf.mod)
+```
+hr, year, and workday appear to be the most immportant as the mean decsrease in the mse resulting from the inclusion of the variables in the model is the smallest for those three variables. 
+
+# Part II: Vegetation Cover
+
+Problems 5 - 8 use data on vegetation cover. Use the data frames covtype.train and covtype.test. The
+original data are at https://archive.ics.uci.edu/ml/datasets/Covertype
+
+Each data set contains 10,000 observations of 55 variables. These have been collected on 30m × 30m patches
+of hilly forest land by the US Forest Service.
+
+```{r}
+covtype_train <- read.csv("covtype_train.csv", stringsAsFactors = FALSE , row.names = 1)
+head(covtype_train)
+
+covtype_test <- read.csv("covtype_test.csv", stringsAsFactors = FALSE, row.names = 1)
+head(covtype_test)
+
+# Change dumies to 0 1 scale
+covtype_train$cover <- ifelse(covtype_train$cover == 3, 1, ifelse(covtype_train$cover == 2, 0, NA))
+covtype_test$cover <- ifelse(covtype_test$cover == 3, 1, ifelse(covtype_test$cover == 2, 0, NA))
+
+# Go back to import in first part and do this with row names too
+```
+
+Problem 5 (20)
+Fit a logistic model to the training data in order to separate the classes. Choose a classification threshold so that sensitivity and specificity are approximately the same on the training data. Then report sensitivity, specificity, and overall error rate for the test data.
+
+```{r message = FALSE, warning = FALSE}
+# Using the Train Data 
+covfit <- glm(factor(cover) ~ ., data = covtype_train, family=binomial)
+
+
+pred = predict(covfit, covtype_train, type = "response")
+class_pred = predict(covfit, covtype_train, type = "response") > .17
+
+#accuracy - which rows did we get the class prediction correctly equal to z
+sum(class_pred == covtype_train$cover) / nrow(covtype_train)
+
+# confusion matrix
+b <- table(covtype_train$cover, class_pred)
+
+# Test whether the sensitivity and specificity are approximately the same
+# Specificity 
+a <- b[1,1]/(b[1,1] + b[1,2])
+# Sensitivity 
+c<- b[2,2]/(b[2,2] + b[2,1])
+# Specificity minus sensitivity 
+a-c
+
+```
+```{r message = FALSE, warning = FALSE}
+# Using the Test Data
+
+pred <- predict(covfit, newdata = covtype_test, type = 'response')
+class_pred = predict(covfit, covtype_test, type = "response") > .17
+
+#accuracy - which rows did we get the class prediction correctly equal to z
+sum(class_pred == covtype_test$cover) / nrow(covtype_test)
+
+# confusion matrix
+b <- table(covtype_test$cover, class_pred)
+
+# Test whether the sensitivity and specificity are approximately the same
+# Specificity 
+b[1,1]/(b[1,1] + b[1,2])
+# Sensitivity 
+b[2,2]/(b[2,2] + b[2,1])
+
+auc(covtype_test$cover, pred)
+```
+If we use the same classification threshold for the test that we used for training the model (0.17), then we end up with a specificity of 0.964 and a sensitivity of 0.958. The model performs relatively well as indicated by the test error (auc) of 0.994. 
+
+Problem 6 (25)
+Fit a support vector machine with radial kernels in order to separate the classes. Tune the cost and gamma
+parameters so that cross validation gives the best performance on the training data. Then assess the resulting model on the test data. Report sensitivity, specificity, and overall error rate for training and test data.
+
+```{r message = FALSE, warning = FALSE}
+# Eliminated several soil columns to make run time faster
+
+covtype_train2 <-covtype_train[,c(1:15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55)]
+tune_out_radial <- tune(svm, factor(cover) ~ ., data = covtype_train2, kernel = "radial", scale = TRUE, ranges = list(cost = c(0.001, 0.01), gamma = c(0.0001, 0.001)))
+
+```
+
+```{r message = FALSE, warning = FALSE}
+
+tune_out_radial2  <- tune_out_radial$best.model
+
+# Train error 
+covtype_train2$Pred_Class <- predict(tune_out_radial2, covtype_train2)
+
+confusionMatrix(covtype_train2$cover, covtype_train2$Pred_Class)
+
+# Test error
+
+covtype_test$Pred_Class <- predict(tune_out_radial2, covtype_test)
+
+confusionMatrix(covtype_test$cover, covtype_test$Pred_Class)
+
+# Initial class imbalance may have led model to only predict 0s
+
+```
+Problem 7 (10)
+Fit a decision tree to the training data in order to separate the two classes. Prune the tree using cross
+validation and make sure that there are no redundant splits (i.e. splits that lead to leaves with the same
+classification). Then estimate the classification error rate for the pruned tree from the test data.
+
+```{r message = FALSE, warning = FALSE}
+
+mytree <- tree(factor(cover) ~ ., data = covtype_train)
+
+set.seed(3)
+cv.mytree <- cv.tree(mytree ,FUN=prune.misclass)
+
+plot(cv.mytree$size, sqrt(cv.mytree$dev / nrow(covtype_train)), type = "b",
+     xlab = "Tree Size", ylab = "CV-RMSE")
+```
+
+Lowest error within one standard deviation rule is for a tree of size 3
+
+```{r message = FALSE, warning = FALSE}
+# So find the right tree length with cv and then pess through the prune.tree for the analysis 
+prune.mytree <- prune.tree(mytree, best=3)
+
+y.pred <- predict(prune.mytree, newdata = covtype_test, type= "class")
+
+confusionMatrix(y.pred, covtype_test$cover)
+
+```
+
+Problem 8 (20)
+Fit a random forest model to the training data in order to separate the classes. Identify the ten most
+important variables and fit another random forest model, using only these variables. Use the test data to
+decide which model has better performance.
+
+```{r message = FALSE, warning = FALSE}
+rf.fit <- randomForest(factor(cover) ~ ., data = covtype_train, importance =TRUE)
+varImpPlot(rf.fit)
+
+y.pred <- predict(rf.fit, newdata = covtype_test, type= "class")
+
+confusionMatrix(y.pred, covtype_test$cover)
+```
+
+```{r message = FALSE, warning = FALSE}
+rf.fit2 <- randomForest(factor(cover) ~ elev + soil2 + soil4 + wild4 + h_dist_hydro + hillshade_12 + h_dist_fire + v_dist_hydro + slope + aspect, data = covtype_train, importance =TRUE)
+
+y.pred2 <- predict(rf.fit2, newdata = covtype_test, type= "class")
+
+confusionMatrix(y.pred2, covtype_test$cover)
+
+```
+The model with only the top 10 variables included performs slightly better. 
+
+
+Part 3: MNIST Digit Data
+Problems 9 and 10 use the MNIST image classification data, available as mnist_all.RData in Canvas. We
+use only the test data (10,000 images).
+
+```{r message = FALSE}
+mnist <-load('mnist_all.RData')
+mnist_test <- data.frame(test$x, test$y) 
+
+```
+
+Problem 9 (20)
+(a) Select a random subset of 1000 digits. Use hierarchical clustering with complete linkage on these images and visualize the dendrogram.
+
+```{r message = FALSE}
+rsub <- sample(nrow(mnist_test), 1000, replace = FALSE)
+mnist_test_sub <- mnist_test[rsub,]
+
+clust.complete <- hclust(dist(mnist_test_sub),method="complete")
+plot(clust.complete)
+unique(test$y)
+```
+
+(b) Does the dendrogram provides compelling evidence about the "correct" number of clusters? Explain
+your answer.
+
+The dendrogram does not give us the "correct" number of clusters, but it helps us better understand the ballpark. The lower in the tree that fusions occur, the more similar groups of observatios are to each other. In contrast, groups that fuse later can be quite different. In the above dendrogram, it looks like there is significant fusing that occurs lower in the tree. One single dendrogram can be used ot obtain any number of clusters though, and there are too many leaves above for us to sufficiently eyeball the correct number of clusters. 
+
+(c) Cut the dendrogram to generate a set of clusters that appears to be reasonable. There should be
+between 5 and 15 clusters. Then find a way to create a visual representation (i.e. a typical image) of
+each cluster. Explain and describe your approach.
+
+```{r}
+clust.complete.cut <- cutree(clust.complete,10)
+
+plot(clust.complete)
+rect.hclust(clust.complete, k=10, border="red")
+```
+
+Problem 10 (20)
+Use Principal Component Analysis on the MNIST images.
+
+(a) Make a plot of the proportion of variance explained vs. number of principal components. Which fraction
+of the variance is explained by the first two principal components? Which fraction is explained by the
+first ten principal components?
+
+```{r message = FALSE}
+# Create Matrix of Predictors 
+x <- model.matrix(test.y ~ .-1, mnist_test_sub)
+
+# Compute PC
+pr.out <- prcomp(x)
+
+# Plot
+std_dev <- pr.out$sdev
+pr_var <- std_dev^2
+prop_varex <- pr_var/sum(pr_var)
+plot(prop_varex, xlab = "Principal Component",
+             ylab = "Proportion of Variance Explained",
+             type = "b")
+
+# Proportion explained by first ten 
+sum(prop_varex[1:10])
+```
+
+
+(b) Plot the scores of the first two principal components of all digits against each other, color coded by the digit that is represented. Comment on the plot. Does it appear that digits may be separated by these
+scores?
+
+```{r message = FALSE}
+plot(pr.out$x[,1:2], col = mnist_test_sub$test.y)
+legend("topleft", legend=levels(as.factor(mnist_test_sub$test.y)), pch=16, col=unique(mnist_test_sub$test.y))
+```
+
+It doea appear that some of the digits might be separated by the scores, though it is highly imperfect. As the above plot shows, for some numbers like those represented by black, blue, or yellow, there is something resembling clusters. For others like those represented by light blue or pink, it is not as clear. 
+
+(c) Find three digits which are reasonably well separated by the plot that you made in part (b). Illustrate this with a color coded plot like the one in (b) for just these three digits. Don't expect perfect separation.
+
+```{r message = FALSE}
+plot(pr.out$x[mnist_test_sub$test.y == 2 | mnist_test_sub$test.y == 3 | mnist_test_sub$test.y == 9,1:2], col = mnist_test_sub[mnist_test_sub$test.y == 2 | mnist_test_sub$test.y == 3 | mnist_test_sub$test.y == 9,]$test.y)
+legend("topleft", legend=levels(as.factor(mnist_test_sub[mnist_test_sub$test.y == 2 | mnist_test_sub$test.y == 3 | mnist_test_sub$test.y == 9,]$test.y)), pch=16, col=unique(mnist_test_sub[mnist_test_sub$test.y == 2 | mnist_test_sub$test.y == 3 | mnist_test_sub$test.y == 9,]$test.y))
+
+```
+
+(d) Find three other digits which are not well separated by the plot that you made in part (b). Illustrate
+this with another color coded plot like the one in (b) for just these three digits.
+
+```{r message = FALSE}
+plot(pr.out$x[mnist_test_sub$test.y == 4 | mnist_test_sub$test.y == 7 | mnist_test_sub$test.y == 5,1:2], col = mnist_test_sub[mnist_test_sub$test.y == 4 | mnist_test_sub$test.y == 7 | mnist_test_sub$test.y == 5,]$test.y)
+legend("topleft", legend=levels(as.factor(mnist_test_sub[mnist_test_sub$test.y == 4 | mnist_test_sub$test.y == 7 | mnist_test_sub$test.y == 5,]$test.y)), pch=16, col=unique(mnist_test_sub[mnist_test_sub$test.y == 4 | mnist_test_sub$test.y == 7 | mnist_test_sub$test.y == 5,]$test.y))
+
+```
+
+

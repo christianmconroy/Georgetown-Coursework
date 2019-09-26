@@ -1,0 +1,425 @@
+---
+title: "Statistical Learning HW 7 - Ch. 8 - Trees and Ensembles"
+author: "Christian Conroy"
+date: "April 18, 2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+require(knitr)
+require(leaps)
+require(pROC)
+require(readxl)
+#install.packages('randomForest')
+require(randomForest)
+#install.packages('gbm')
+require(gbm)
+require(MASS)
+require(ggplot2)
+#install.packages('tree')
+require(tree)
+require(caret)
+require(ISLR)
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="~/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics/Week 11 - Trees and Ensembles")
+```
+
+
+# ISLR 4 (3 points)
+
+This question relates to the plots in Figure 8.12.
+
+(a) Sketch the tree corresponding to the partition of the predictor space illustrated in the left-hand panel of Figure 8.12. The numbers inside the boxes indicate the mean of Y within each region.
+
+(b) Create a diagram similar to the left-hand panel of Figure 8.12, using the tree illustrated in the right-hand panel of the same figure. You should divide up the predictor space into the correct regions, and indicate the mean for each region.
+
+![Alt text](/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics/Tree Photos.jpg)
+
+# Extra 61 (3 points)
+
+Consider the concrete strength data from problem 37. There are eight numerical predictors and one
+numerical response.
+
+```{r message = FALSE}
+# Load in Data
+concrete <- read_excel("Concrete_Data.xls")
+# Clean up names 
+colnames(concrete) <- c("cementkg", "blustfur", "flyash", "water", "superplas", "courseagg", "fineagg", "age", "CCS")
+```
+
+a) Fit a random forest to the data to predict strength. Estimate the rms prediction error using 10-fold
+cross validation. You will have to write your own cross validation code to do this.
+
+```{r message = FALSE, warning = FALSE}
+# Not 100% sure if this is the best way to do the folds or not
+
+# Creating the folds
+vec <- runif(nrow(concrete))
+folds <- cut(vec, 10, labels = FALSE)
+
+# Affixing folds to observations
+concrete$folds <- folds
+
+# Function to train, predict, and get F1 across folds. 
+KCFRF <- function(k) {
+  # Create a train subset consisting of all folds that do not equal k-1.
+  trainspec <- concrete[concrete$folds != eval(k-1),]
+ # Train the specification using the subset created. 
+  specreg <- randomForest(CCS ~ ., data= trainspec, importance =TRUE)
+  # Create a subset for prediction equal to the fold k
+  trainpred <- concrete[concrete$folds == k,]
+  # Predict by applying the specification trained on all folds not equal to k-1 to the subset for prediction equal to the fold k.
+  trainpred$specpred <- predict(specreg, newdata = trainpred)
+  # Evaluate the model by comparing the predicted versus actual values of the dependent variable. 
+  RMSE <- sqrt(mean((trainpred$specpred - trainpred$CCS)^2))
+  return(RMSE)
+}
+
+# Run a linear regression and get accuracy for train on kth folds (1-10)
+f <- 1:10
+CFRF <- lapply(f, KCFRF)
+CFRF2 <- do.call(rbind, CFRF)
+mean(CFRF2)
+
+```
+
+b) Make a variable importance plot for a random forest model for the full data.
+
+```{r message = FALSE}
+concrete$folds <- NULL
+rf.concrete <- randomForest(CCS ~ ., data= concrete, importance =TRUE)
+varImpPlot(rf.concrete)
+
+# We can technically use this for feature selection too, right?
+```
+
+
+c) Leave out the least important predictor and repeat part a. How does the estimated rms prediction
+error change? Comment on your observations.
+
+```{r message = FALSE}
+# Creating the folds
+vec <- runif(nrow(concrete))
+folds <- cut(vec, 10, labels = FALSE)
+
+# Affixing folds to observations
+concrete$folds <- folds
+
+trainspec <- concrete[folds != eval(7-1),]
+specreg <- randomForest(CCS ~ ., data= trainspec, importance =TRUE)
+trainpred <- concrete[folds == 7,]
+trainpred$specpred <- predict(specreg, newdata = trainpred)
+Comps <- data.frame(trainpred$CCS, trainpred$specpred)
+
+# Function to train, predict, and get F1 across folds. 
+KCFRF <- function(k) {
+  # Create a train subset consisting of all folds that do not equal k-1.
+  trainspec <- concrete[concrete$folds != eval(k-1),]
+ # Train the specification using the subset created. 
+  specreg <- randomForest(CCS ~ cementkg + blustfur + water + superplas + courseagg + fineagg + age, data= trainspec, importance =TRUE)
+  # Create a subset for prediction equal to the fold k
+  trainpred <- concrete[concrete$folds == k,]
+  # Predict by applying the specification trained on all folds not equal to k-1 to the subset for prediction equal to the fold k.
+  trainpred$specpred <- predict(specreg, newdata = trainpred)
+  # Evaluate the model by comparing the predicted versus actual values of the dependent variable. 
+  RMSE <- sqrt(mean((trainpred$specpred - trainpred$CCS)^2))
+  return(RMSE)
+}
+
+# Run a linear regression and get accuracy for train on kth folds (1-10)
+f <- 1:10
+CFRF <- lapply(f, KCFRF)
+CFRF2 <- do.call(rbind, CFRF)
+mean(CFRF2)
+
+```
+The estimated RMS has risen slightly. 
+
+# Extra 62 (3 points)
+
+Consider the concrete strength data from problem 37. There are eight numerical predictors and one numerical response. Load the data and split them into a training and test set (70% / 30%).
+
+```{r message = FALSE}
+# Load in Data
+concrete <- read_excel("Concrete_Data.xls")
+# Clean up names 
+colnames(concrete) <- c("cementkg", "blustfur", "flyash", "water", "superplas", "courseagg", "fineagg", "age", "CCS")
+# Create Train and Test
+train <- sample(nrow(concrete),(nrow(concrete) * .70), replace = FALSE)
+concrete_train <- concrete[train,]
+concrete_test <- concrete[-train,]
+```
+
+Fit a gbm model to the training data to predict strength, for several choices of n.trees, shrinkage,
+interaction.depth. Compute the rms prediction errors for the training and the test sets in each case and
+demonstrate that it is possible to overfit with this method.
+
+```{r message = FALSE, warning= FALSE}
+set.seed(1)
+
+# What exactly are the factors motivating the decision to use a specific number of trees? 
+
+boostnt <- function(nt) {
+  boost.concrete <- gbm(CCS ~ ., data= concrete_train, n.trees=nt, interaction.depth=1, shrinkage=.001, distribution = "gaussian")
+  yhat.train <- predict(boost.concrete, n.trees=nt)
+  rmse_train <- sqrt(mean((yhat.train - concrete_train$CCS)^2))
+  yhat.test <- predict(boost.concrete, newdata = concrete_test, n.trees=nt)
+  rmse_test <- sqrt(mean((yhat.test - concrete_test$CCS)^2))
+  full <- cbind(nt, rmse_train, rmse_test)
+  return(full)
+}
+
+nt <- c(1000, 3000, 5000, 7000, 9000)
+
+boostntchoices <- lapply(nt, boostnt)
+boostntchoices <- do.call(rbind.data.frame, boostntchoices)
+boostntchoices
+
+boostsh <- function(sh) {
+  boost.concrete <- gbm(CCS ~ ., data= concrete_train, n.trees=5000, interaction.depth=1, shrinkage= sh, distribution = "gaussian")
+  yhat.train <- predict(boost.concrete, n.trees=5000)
+  rmse_train <- sqrt(mean((yhat.train - concrete_train$CCS)^2))
+  yhat.test <- predict(boost.concrete, newdata = concrete_test, n.trees=5000)
+  rmse_test <- sqrt(mean((yhat.test - concrete_test$CCS)^2))
+  full <- cbind(sh, rmse_train, rmse_test)
+  return(full)
+}
+
+sh <-  c(0.001, 0.01, 0.1, 0.2, 0.5)
+
+boostshchoices <- lapply(sh, boostsh)
+boostshchoices <- do.call(rbind.data.frame, boostshchoices)
+boostshchoices
+
+boostid <- function(id) {
+  boost.concrete <- gbm(CCS ~ ., data= concrete_train, n.trees=5000, interaction.depth=id, shrinkage=.001, distribution = "gaussian")
+  yhat.train <- predict(boost.concrete, n.trees=5000)
+  rmse_train <- sqrt(mean((yhat.train - concrete_train$CCS)^2))
+  yhat.test <- predict(boost.concrete, newdata = concrete_test, n.trees=5000)
+  rmse_test <- sqrt(mean((yhat.test - concrete_test$CCS)^2))
+  full <- cbind(id, rmse_train, rmse_test)
+  return(full)
+}
+
+id <- c(1,2,3, 4, 5)
+
+boostidchoices <- lapply(id, boostid)
+boostidchoices <- do.call(rbind.data.frame, boostidchoices)
+boostidchoices
+
+```
+It is possible to overfit, which is especially clear if we look at ntrees. As we increase the number of trees as specified by n.trees, the rmse is consistently higher for the train compared to the test. Boosting can overfit if the number of trees is too large.As we increase shrinkage, the opposite occurs, with a gap growing to the advantage of the test rmse as we increase shrinkage, As we increase the interaction depth, similarily, the test rmse looks stronger. 
+
+# ISLR 7 (5 points)
+In the lab, we applied random forests to the Boston data using mtry=6 and using ntree=25 and ntree=500. Create a plot displaying the test error resulting from random forests on this data set for a more comprehensive range of values for mtry and ntree. You can model your plot after Figure 8.10. Describe the results obtained.
+
+```{r message = FALSE, warning= FALSE}
+data('Boston')
+
+# Create Train and Test
+set.seed(1)
+train <- sample(nrow(Boston),(nrow(Boston) * .70), replace = FALSE)
+Boston_train <- Boston[train,]
+Boston_test <- Boston[-train,]
+
+```
+
+```{r message = FALSE}
+
+rfmt <- function(mt, nt) {
+  rf.Boston <- randomForest(medv ~ ., data= Boston_train, mtry = mt, ntree = nt)
+  yhat.rf = predict(rf.Boston, newdata=Boston_test)
+  rmse_test <- sqrt(mean((yhat.rf-Boston_test$medv)^2))
+  full <- cbind(mt, nt, rmse_test)
+  return(full)
+}
+
+mtry <- c(13, 13/2, sqrt(13))
+ntr <-  c(25, 500, 1000)
+
+args <- expand.grid(mt = mtry, nt = ntr)
+
+rfchoices <- mapply(FUN = rfmt, mt = args$mt, nt = args$nt)
+
+```
+
+```{r message = FALSE}
+rfchoices_plot <- as.data.frame(t(rfchoices))
+
+rfchoices_plot$m <- ifelse(rfchoices_plot$V1 <= 3.62, "Sqrt(m)", ifelse(rfchoices_plot$V1 == 13, "m", ifelse(rfchoices_plot$V1 == 6.50, "m/2", NA)))
+
+ggplot(data = rfchoices_plot, mapping = aes(y = V3, x = V2, group = factor(m), colour=factor(m))) +
+   geom_line(size=1.2) + xlab("Number of Trees") + ylab("RMSE") +  theme(legend.title = element_blank())
+```
+
+
+# ISLR 9 (5 points)
+This problem involves the OJ data set which is part of the ISLR package.
+(a) Create a training set containing a random sample of 800 observations, and a test set containing the remaining observations.
+
+```{r message = FALSE, warning= FALSE}
+data('OJ')
+
+# Create Train and Test
+set.seed(1)
+train <- sample(nrow(OJ), 800, replace = FALSE)
+OJ_train <- OJ[train,]
+OJ_test <- OJ[-train,]
+
+```
+
+(b) Fit a tree to the training data, with Purchase as the response and the other variables as predictors. Use the summary() function to produce summary statistics about the tree, and describe the results obtained. What is the training error rate? How many terminal nodes does the tree have?
+
+```{r message = FALSE, warning= FALSE}
+
+mytree <- tree(factor(Purchase) ~ ., data = OJ_train)
+summary(mytree)
+
+```
+The training error rate is .165 and the tree has 8 terminal nodes. [MISCLASSIFCATION ERROR, RIGHT?]
+
+(c) Type in the name of the tree object in order to get a detailed text output. Pick one of the terminal nodes, and interpret the information displayed.
+
+```{r message = FALSE, warning= FALSE}
+mytree
+```
+For the fifth node we see that we check if the value of LoyalCH is greater than 0.264. There are 184 such observations. For these values the tree predicts MM as the juice of choice with a deviance of 200.
+
+(d) Create a plot of the tree, and interpret the results.
+
+```{r message = FALSE, warning= FALSE}
+plot(mytree)
+text(mytree, pretty =0)
+```
+
+The plot matches our interpretation of the output in part c. For the fifth node we are evaluating if LoyalCH is greatet than 0.264. If it is, we evaluate again this time on whether the PriceDiff is less than or greater than 0.195. If it is less than, we evaluate again based on whether SpecialCH is less than or grater 0.5. 
+
+(e) Predict the response on the test data, and produce a confusion matrix comparing the test labels to the predicted test labels. What is the test error rate?
+
+```{r message = FALSE, warning= FALSE}
+y.pred <- predict(mytree, newdata = OJ_test, type= "class")
+
+table(OJ_test$Purchase, y.pred)
+
+confusionMatrix(y.pred, OJ_test$Purchase)
+```
+We end up with an accuracy of 0.774. 
+
+(f) Apply the cv.tree() function to the training set in order to determine the optimal tree size.
+
+```{r message = FALSE, warning= FALSE}
+cv.mytree <- cv.tree(mytree ,FUN=prune.misclass)
+names(cv.mytree)
+cv.mytree
+```
+
+The lowest error is for a tree of size 8. 
+
+(g) Produce a plot with tree size on the x-axis and cross-validated classification error rate on the y-axis.
+
+```{r message = FALSE, warning= FALSE}
+cv.mytree <- cv.tree(mytree)
+plot(cv.mytree$size, cv.mytree$dev, type='b')
+```
+
+(h) Which tree size corresponds to the lowest cross-validated classification error rate?
+
+Tree size of 8.
+
+(i) Produce a pruned tree corresponding to the optimal tree size obtained using cross-validation. If cross-validation does not lead to selection of a pruned tree, then create a pruned tree with five terminal nodes.
+
+```{r message = FALSE, warning= FALSE}
+# So find the right tree length with cv and then pess through the prune.tree for the analysis 
+prune.mytree <- prune.tree(mytree, best=8)
+summary(prune.mytree)
+```
+
+
+(j) Compare the training error rates between the pruned and unpruned trees. Which is higher?
+
+The training error (misclassification error rate) exactly the same for the pruned and unpruned trees. 
+
+(k) Compare the test error rates between the pruned and unpruned trees. Which is higher?
+
+```{r message = FALSE, warning= FALSE}
+y.pred <- predict(prune.mytree, newdata = OJ_test, type= "class")
+
+table(OJ_test$Purchase, y.pred)
+
+# IS THE ACCURACY RATE HERE SERVING AS TEST ERROR OR SHOULD WE DO SOMETHING DIFFERENTLY? 
+confusionMatrix(y.pred, OJ_test$Purchase)
+```
+
+It is the exact same for test as well. In both training and test cases, it is because the best selection was the model with all variables. 
+
+# Extra 59 (5 Points)
+
+This problem uses the MNIST image classification data, available as mnist_all.RData that were used
+earlier. We want to distinguish between 4 and 5.
+
+```{r message = FALSE}
+mnist <-load('mnist_all.RData')
+
+mnist_train <- data.frame(train$x, train$y)
+mnist_train <- mnist_train[mnist_train$train.y == 4 | mnist_train$train.y == 5,]
+
+mnist_test <- data.frame(test$x, test$y) 
+mnist_test <- mnist_test[mnist_test$test.y == 4 | mnist_test$test.y == 5,]
+
+```
+
+a) Fit a tree model to the training data and assess its accuracy (prediction error) using the test data. Be sure to make a classification tree and to predict a class, not a numerical value.
+
+```{r message = FALSE, warning= FALSE}
+
+mytree <- tree(factor(train.y) ~ ., data = mnist_train)
+summary(mytree)
+
+y.pred <- predict(mytree, newdata = mnist_test, type= "class")
+
+table(mnist_test$test.y, y.pred)
+confusionMatrix(y.pred, mnist_test$test.y)
+
+```
+Accuracy of 0.966. 
+
+b) Fit a random forest model to the training data. Choose the number of trees such that the algorithm
+runs no longer than 5 minutes. Then assess the accuracy (prediction error) using the test data.
+
+```{r message = FALSE, warning= FALSE}
+
+rf.mnist <- randomForest(factor(train.y) ~ .,data= mnist_train, mtry=100, ntree=25, importance =TRUE)
+
+yhat.rf = predict(rf.mnist ,newdata= mnist_test)
+
+table(mnist_test$test.y, yhat.rf)
+
+confusionMatrix(yhat.rf, mnist_test$test.y)
+```
+Accuracy of 0.997.
+
+c) Fit a bagging model to the training data, using the same number of tress as in part b. Assess the
+accuracy (prediction error) using the test data.
+
+```{r message = FALSE, warning= FALSE}
+
+bag.mnist <- randomForest(factor(train.y) ~.,data=mnist_train, mtry=784, ntree=25)
+summary(bag.mnist)
+
+yhat.bag <- predict (bag.mnist, newdata = mnist_test)
+
+table(mnist_test$test.y, yhat.bag)
+
+confusionMatrix(yhat.bag, mnist_test$test.y)
+```
+
+d) Comment on your observations. How many trees were you able to simulate? How accurate are the
+three methods?
+
+All three models were very accurate - 0.966, 0.997, and .986, respectively. The accuracy improved through each model, with the bagging model in c) having the best accuracy.
+

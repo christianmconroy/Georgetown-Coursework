@@ -1,0 +1,201 @@
+---
+title: "Chapter 12 Lab Answer Key"
+#author: Michael Bailey
+date: 'Last Update: November 2018'
+output:
+  word_document: default
+  pdf_document: default
+---
+## Preparation
+```{r setup, include=TRUE, message = FALSE, warning = FALSE}
+require(knitr)
+library(ISLR)
+library(ggplot2)
+# install.packages('usmap')
+library(usmap)
+library(data.table)
+
+opts_chunk$set(echo = TRUE)
+options(digits = 6)
+```
+
+```{r message = FALSE, include = FALSE}
+# Load in the data
+data('USArrests')
+```
+
+## US Arrests: Exploratory Analysis
+
+```{r message = FALSE}
+head(USArrests)
+```
+
+```{r tidy = FALSE}
+
+## Summary Stats
+summary(USArrests)
+
+max(USArrests$Murder)
+
+max(USArrests$UrbanPop)
+
+max(USArrests$Rape)
+
+max(USArrests$Assault)
+
+
+## Dimensions
+dim(USArrests)
+
+## Missingness
+sapply(USArrests, function(x) sum(is.na(x)))
+
+# Are variables related to each other
+cor(USArrests)
+
+```
+
+Obviously the most recorded incident is the least serious one with the mean for assault at 170.8
+
+Georgia (where I am from) is the most dangerous for murders 
+91% of peiple in California are in urban
+Nevada is most for rape
+North Carolina is most for assault
+
+There are 50*4 = 200 dimensions in the dataset
+
+No missing data
+
+Not much of a correlation between urban and crime reporting as one would expect (Rape is the closest at 0.411)
+
+If a place has a lot of one type of crime, it makes sense that they would have a lot of another type of crime 
+
+Clearly high between assault and murder and slightly high between rape and those two as well, but not as high as one might expect 
+
+#### Graph Analysis 
+
+```{r urbanrape, echo = FALSE}
+
+##### Draw graphs to visualize correlations
+
+# Urban Pop - Rape
+
+ggplot(USArrests, aes(UrbanPop, Rape)) + geom_point() +
+  geom_smooth()+
+  labs(
+    x = "Proportion living in Urban Areas",
+    y= "Incidents of rape per 100,000 people"
+  ) +
+  scale_x_continuous(breaks = seq(20,100, by = 20)) +
+  scale_y_continuous(limits = c(0,50), breaks = seq(0,50, by = 10))
+```
+
+
+```{r urbanmur, echo = FALSE}
+
+# Urban Pop - Murder
+
+ggplot(USArrests, aes(UrbanPop, Murder)) + geom_point() +
+  geom_smooth()+
+  labs(
+    x = "Proportion living in Urban Areas",
+    y= "Murders per 100,000 people"
+  ) +
+  scale_x_continuous(breaks = seq(20,100, by = 20)) +
+  scale_y_continuous(limits = c(0,25), breaks = seq(0,25, by = 5))
+
+```
+
+```{r urbassault, echo = FALSE}
+# Urban Pop - Assault
+
+ggplot(USArrests, aes(UrbanPop, Assault)) + geom_point() +
+  geom_smooth(method = lm)+
+  labs(
+    x = "Proportion living in Urban Areas",
+    y= "Incidents of rape per 100,000 people"
+  ) +
+  scale_x_continuous(breaks = seq(20,100, by = 20)) +
+  scale_y_continuous(limits = c(0,400), breaks = seq(0,400, by = 100))
+
+```
+
+```{r assaultrape, echo = FALSE}
+# Assault - Rape
+
+ggplot(USArrests, aes(Assault, Rape)) + geom_point() +
+  geom_smooth(method = lm)+
+  labs(
+    x = "Assaults per 100,000 people",
+    y= "Incidents of rape per 100,000 people"
+  ) +
+  scale_x_continuous(breaks = seq(0,400, by = 100)) +
+  scale_y_continuous(limits = c(0,50), breaks = seq(0,50, by = 10))
+
+# While the correlation is still not that high, it would appear that there may be more of a story with urban and rape. 
+
+```
+
+
+```{r AssaultMurder, echo = FALSE}
+# Assault - Murder
+
+ggplot(USArrests, aes(Assault, Murder)) + geom_point() +
+  geom_smooth()+
+  labs(
+    x = "Assaults per 100,000 people",
+    y= "Murders per 100,000 people"
+  ) +
+  scale_x_continuous(breaks = seq(0,400, by = 100))
+scale_y_continuous(breaks = seq(20,100, by = 20))
+
+# High corr obviously with both loess and lm showing this 
+```
+
+
+```{r rapemurder, echo = FALSE}
+# Rape - Murder
+
+ggplot(USArrests, aes(Rape, Murder)) + geom_point() +
+  geom_smooth()+
+  labs(
+    x= "Incidents of rape per 100,000 people",
+    y = "Murders per 100,000 people"
+  ) +
+  scale_x_continuous(breaks = seq(0,50, by = 10)) +
+  scale_y_continuous(limits = c(0,20), breaks = seq(0,20, by = 5))
+
+# High corr, but not that strong. LM would appear to show positive relationship. 
+```
+
+```{r murder, echo = FALSE}
+##### Mapping the rates in the states 
+# Set the row names to be the first column for use in mapping
+USArrests <- setDT(USArrests, keep.rownames = TRUE)[]
+names(USArrests)[1] <- "state"
+
+# Murder
+plot_usmap(data = USArrests, values = "Murder", lines = "black") + 
+  scale_fill_continuous(name = "Murders per 100,000 People", label = scales::comma, low = "white", high = "red") + labs(title = "Murder Rates in the US by State") + theme(legend.position = "right")
+```
+
+```{r rape, echo = FALSE}
+# Rape
+plot_usmap(data = USArrests, values = "Rape", lines = "black") + 
+  scale_fill_continuous(name = "Rapes per 100,000 People", label = scales::comma, low = "white", high = "red") + labs(title = "Rape Rates in the US by State") + theme(legend.position = "right")
+
+```
+
+```{r assault, echo = FALSE}
+# Assault
+plot_usmap(data = USArrests, values = "Assault", lines = "black") + 
+  scale_fill_continuous(name = "Assaults per 100,000 People", label = scales::comma, low = "white", high = "red") + labs(title = "Assault Rates in the US by State") + theme(legend.position = "right")
+
+```
+
+```{r urbanpop, echo = FALSE}
+# Urban Population
+plot_usmap(data = USArrests, values = "UrbanPop", lines = "black") + 
+  scale_fill_continuous(name = "% Population Urban", label = scales::comma, low = "white", high = "red") + labs(title = "% Urban by US State") + theme(legend.position = "right")
+
+```

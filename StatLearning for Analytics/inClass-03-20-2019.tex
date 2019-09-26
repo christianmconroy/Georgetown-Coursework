@@ -1,0 +1,696 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={inClass-03/20/2019},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{{#1}}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{{#1}}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\ImportTok}[1]{{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{{#1}}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{{#1}}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{{#1}}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{{#1}}}}
+\newcommand{\BuiltInTok}[1]{{#1}}
+\newcommand{\ExtensionTok}[1]{{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{{#1}}}
+\newcommand{\RegionMarkerTok}[1]{{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{{#1}}}}
+\newcommand{\NormalTok}[1]{{#1}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{inClass-03/20/2019}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+  \author{}
+  \preauthor{}\postauthor{}
+  \date{}
+  \predate{}\postdate{}
+
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(ISLR)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'ISLR' was built under R version 3.4.4
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(leaps)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'leaps' was built under R version 3.4.4
+\end{verbatim}
+
+\section{Regularized Regression}\label{regularized-regression}
+
+With multiple linear regression, our loss function was the Residual Sum
+of Squares
+
+\[
+\begin{align}
+L = RSS =& \sum_i (\hat{y_i} - y_i)^2 \\
+&= \sum_i (\left( \beta_0 + \beta_1 X_1 + .... \right) - y_i)^2
+\end{align}
+\]
+
+With this is mind, we could cast the problem of statistical inference as
+merely a problem of optimization: we want to find the vaulues of
+\(\beta_0, \beta_1,...\) which lead to the \emph{minimum} value of RSS.
+
+\[
+\hat{\beta} = \min_{\beta} RSS \\ 
+\hat{\beta} = \min_{\beta} \sum_i (\left( \beta_0 + \beta_1 X_1 + .... \right) - y_i)^2
+\]
+
+Then \(\hat{\beta}\) is our \emph{best} estimate of the ``right'' values
+of the model coefficients.
+
+However, there are a few regimes where this model will fail and we need
+to come up with a more general form that allows us to make an
+accomodation. For example, if the number of predictors is very large,
+many of the predictors might be uncorelated with Y, and we just end up
+overfitting the training data. Worse still, if the number of predictors
+is larger than the number of datapoint, then the Linear Regression
+problem has no solution. To prevent this kind of overfitting, we will
+turn to \emph{Regularized Regression} (also known as Penalized
+Regression).
+
+We change our Loss function
+
+\[
+L = \sum_i (\left( \beta_0 + \beta_1 X_1 + .... \right) - y_i)^2 + g(\beta) \\
+L = f(X, \beta) + g(\beta) \\ 
+L = f(X, \beta) + \lambda g(\beta) \\ 
+\]
+
+Most commonly, we'll still use the RSS as part of our loss function.
+
+\[
+L = RSS + \lambda g(\beta)
+\]
+
+The interesting differenc is that we now add a new term to the loss
+function and this term only depends on the values of the coefficients
+\(\beta\). That function can take many forms and we scale it by a scalar
+factor \(\lambda\). The net effect of this is that values of \(\beta\)
+which have large magnitude will be \emph{penalized} due to the presence
+of this new term.
+
+Now, when we solve this optimization problem, the \(\hat{\beta}\) we
+find is not just dependent on minimizing RSS. Instead, we'll see that we
+need to tradeoff minimizing RSS under the constraints implied by the
+function \(g(\beta)\). Large values of \(\beta\) tend to be penalized,
+so that \(\hat{\beta}\) will tend to reveal smaller overall magnitudes
+of the parameters. For this reason, these techniques are often reffered
+to as \emph{shrinkage}.
+
+\subsection{Ridge Regression}\label{ridge-regression}
+
+With Ridge Regression, our penalty function on \(\beta\) is the L2-norm,
+or Euclidean magnitude.
+
+\[
+g(\beta) = \Vert \beta \Vert _2 = \sum_j \beta_j ^2
+\]
+
+\subsection{LASSO}\label{lasso}
+
+With LASSO Regression, our penalty function on \(\beta\) is the L1-norm,
+similar to the absolute value.
+
+\[
+g(\beta) = \Vert \beta \Vert _1 = \sum_j \lvert \beta_j \rvert
+\]
+
+\subsection{Constrained Optimization
+Concepts}\label{constrained-optimization-concepts}
+
+Create some fake data and plot it.
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+Now, we want to fit a simple linear regression model to this data.
+Recall that we're trying to find the combination of \(\beta_0\) and
+\(\beta_1\) that yields the lowest RSS. Let's visualize this RSS
+surface. I'll also highlight the ``true'' value of the coefficients.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# The below is a vizualization of the loss surface }
+\CommentTok{# The contours here mean curves in the parameter space that have a constant value of loss }
+\CommentTok{# The red dot is the clearly defined minimum, or the true value }
+\CommentTok{# If I use this to find the optimal estimate of Beta 0, the optimal estimate would be 2 because the red dot is the smallest loss function or -2ish in terms of Beta 1 (just follow to the red dot)}
+
+\NormalTok{beta_0_range =}\StringTok{ }\KeywordTok{seq}\NormalTok{(-}\DecValTok{5}\NormalTok{,}\DecValTok{5}\NormalTok{,}\DataTypeTok{length.out=}\DecValTok{50}\NormalTok{)}
+\NormalTok{beta_1_range =}\StringTok{ }\KeywordTok{seq}\NormalTok{(-}\DecValTok{5}\NormalTok{,}\DecValTok{5}\NormalTok{,}\DataTypeTok{length.out=}\DecValTok{50}\NormalTok{)}
+
+\NormalTok{calc_SSE <-}\StringTok{ }\NormalTok{function(parameters, x, y) \{}
+  \NormalTok{y_hat <-parameters[}\DecValTok{1}\NormalTok{] +}\StringTok{ }\NormalTok{parameters[}\DecValTok{2}\NormalTok{]*x}
+  \KeywordTok{sum}\NormalTok{((y_hat -}\StringTok{ }\NormalTok{y)^}\DecValTok{2}\NormalTok{)}
+\NormalTok{\}}
+
+\NormalTok{beta_space <-}\StringTok{ }\KeywordTok{expand.grid}\NormalTok{(beta_0_range, beta_1_range)}
+\NormalTok{beta_space$SSE <-}\StringTok{ }\KeywordTok{apply}\NormalTok{(beta_space[,}\KeywordTok{c}\NormalTok{(}\StringTok{"Var1"}\NormalTok{,}\StringTok{"Var2"}\NormalTok{)], }\DecValTok{1}\NormalTok{, function(p)\{ }\KeywordTok{calc_SSE}\NormalTok{(p,x, y) \})}
+
+\KeywordTok{contour}\NormalTok{(}\DataTypeTok{x=}\NormalTok{beta_0_range, }\DataTypeTok{y=}\NormalTok{beta_1_range, }\DataTypeTok{z=} \KeywordTok{matrix}\NormalTok{(beta_space$SSE, }\DataTypeTok{nrow=}\DecValTok{50}\NormalTok{, }\DataTypeTok{byrow=}\OtherTok{TRUE}\NormalTok{),}\DataTypeTok{nlevels=}\DecValTok{20}\NormalTok{, }\DataTypeTok{xlab=}\StringTok{"beta_0"}\NormalTok{, }\DataTypeTok{ylab=}\StringTok{"beta_1"} \NormalTok{)}
+\KeywordTok{points}\NormalTok{(}\DecValTok{2}\NormalTok{,-}\DecValTok{2}\NormalTok{,}\DataTypeTok{col=}\StringTok{"red"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+I have highlighted in red the likely minimum of this paraboloid, the
+point \(\beta_0=2 \beta_2=-2\). This is the global minimum over the
+whole parameter space. But I can also ask what the minimum of the
+paraboloid would be subect to some constraint. For example, what if I
+say that \(\beta_1\) must be constrained to be equal to 2. What does
+this imply about our minimization problem?
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-4-1.pdf}
+
+This plot shows the line \(\beta_1=2\) and this is the constraint that
+we must adhere to. So our answer about the ``minimum'' must be the
+minimum of the paraboloid that lies on this line. Said differently,
+imagine that this line ``slices'' through the paraboloid and yields a
+parabola of which we simpy find the minimum. So our new minimum (under
+the constraint) is a little bit different than the ``true'' minimum.
+
+Similarly, we can have a different constraint, maybe \(\beta_0\) must be
+1.
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+Aside from simple equality constraints, we can have constraint regions.
+So our constraint might be that \(\beta_0\) must be greater than or
+equal to -2. So any value of \(\beta_0\) large than -2 is permissible.
+In this case (any in many cases), the constraint region is optimized at
+the boundary of the constraint, so the line x=-2 is still the relevant
+constraint. And we can also have linear and non-linear constraints
+boundaries, and that's what Lasso and Ridge Regression are all about.
+
+\subsubsection{Ridge}\label{ridge}
+
+Let's look again at the loss function for Ridge Regression.
+
+\[
+L = \sum_i (y_i - \hat{y_i})^2 + \lambda \sqrt{\sum_j \beta_j ^2}
+\]
+
+For any given value of the penalization parameter \(\lambda\), we can
+recast our Loss function as with the form of a constraint.
+
+\[
+\begin{aligned}
+L = \sum_i (y_i - (\beta_0 + \beta_1 x_i))^2  \\
+\textrm{subject to } \beta_0^2 + \beta_1^2 \le s^2
+\end{aligned}
+\]
+
+which is a circular region in our two dimensional parameter space and is
+a hyper-sphere most generally.
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\subsubsection{Lasso}\label{lasso-1}
+
+Let's look again at the loss function for Lasso Regression.
+
+\[
+L = \sum_i (y_i - \hat{y_i})^2 + \lambda \sum_j |\beta_j|
+\]
+
+For any given value of the penalization parameter \(\lambda\), we can
+recast our Loss function as with the form of a constraint. \[
+\begin{aligned}
+L = \sum_i (y_i - (\beta_0 + \beta_1 x_i))^2  \\
+\textrm{subject to } |\beta_0| + |\beta_1| \le s
+\end{aligned}
+\]
+
+That constraint \(|\beta_0| + |\beta_1| \le s\) defines a region in the
+\(\beta_0, \beta_1\) parameter space. In two dimensions this region is
+``diamond'' shaped and in higher dimensions is referred to as an ``L-1
+Ball'' but is a pointy shape nonetheless.
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\subsubsection{Why Do All This?}\label{why-do-all-this}
+
+These constraint regions enforce that our estimates of \(\hat{\beta}\)
+will lie within some bounded area near zero. This prevents any of the
+coefficients from being too large and thus helps prevent overfitting and
+improves model variance.
+
+As we increase the value of the penalty \(\lambda\), we make our
+constraint region tighter and tighter. Consider the extreme cases here.
+If \(\lambda\) is very small (very little penalization), then our
+constraint region is very large and it probably contains the true
+minimum RSS. So our estimate of \(\hat{\beta}\) in this instance will be
+the same as with unconstrained regression. As we increase \(\lambda\),
+the constraint region pulls in toward the origin, thus making our
+estimate of \(\hat{\beta}\) different than the one for just RSS. As
+\(\lambda\) is increased further, our parameters shrink closer and
+closer to the origin.
+
+The important difference betwee Lasso and Ridge Regression is what
+happens as we increase \(\lambda\). For Ridge, as we increase
+\(\lambda\), our coefficients smoothly shrink in magnitude as they stay
+within the constraint region. The coeffcients can change sign, but it's
+unlikely that they're every exactly 0.
+
+In contrast, because of the L-1 Ball constraint region of Lasso, as we
+increase \(\lambda\) (shrink the constraint region), it is highly likely
+that the our best estimate of \(\vec{\beta}\) hits one of the
+``corners'' of the L-1 Ball, where it then gets stuck. What this means
+is that a subset of the corresponding features are given a coefficient
+of exactly zero, thus taking them out of the model. We'll explore these
+ideas in the next section, but the takeaway is that Lasso performs
+``feature selection'' for us - telling us which features can be dropped
+from the model for any given level of \(\lambda\).
+
+\subsubsection{Regularized Regression
+Trajectories}\label{regularized-regression-trajectories}
+
+Aside from thinking about \(\lambda\) as defining a constraint region,
+we can examine the full range of \(\lambda\) and examine the impact on
+the optimal \(\hat{\beta}\). Think about the extreme cases here:
+
+\textbf{Questions} 1. When \(\lambda = \inf\), what is the value of
+\(\hat{\beta}\)? 1. When \(\lambda = 0\), what is the value of
+\(\hat{\beta}\) and how does it relate to \(\hat{\beta}\) of regular
+regression?
+
+Take a look with a real dataset.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"glmnet"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'glmnet' was built under R version 3.4.4
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: Matrix
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: foreach
+\end{verbatim}
+
+\begin{verbatim}
+## Loaded glmnet 2.0-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"ISLR"}\NormalTok{)}
+
+
+\KeywordTok{head}\NormalTok{(Hitters)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                   AtBat Hits HmRun Runs RBI Walks Years CAtBat CHits
+## -Andy Allanson      293   66     1   30  29    14     1    293    66
+## -Alan Ashby         315   81     7   24  38    39    14   3449   835
+## -Alvin Davis        479  130    18   66  72    76     3   1624   457
+## -Andre Dawson       496  141    20   65  78    37    11   5628  1575
+## -Andres Galarraga   321   87    10   39  42    30     2    396   101
+## -Alfredo Griffin    594  169     4   74  51    35    11   4408  1133
+##                   CHmRun CRuns CRBI CWalks League Division PutOuts Assists
+## -Andy Allanson         1    30   29     14      A        E     446      33
+## -Alan Ashby           69   321  414    375      N        W     632      43
+## -Alvin Davis          63   224  266    263      A        W     880      82
+## -Andre Dawson        225   828  838    354      N        E     200      11
+## -Andres Galarraga     12    48   46     33      N        E     805      40
+## -Alfredo Griffin      19   501  336    194      A        W     282     421
+##                   Errors Salary NewLeague
+## -Andy Allanson        20     NA         A
+## -Alan Ashby           10  475.0         N
+## -Alvin Davis          14  480.0         A
+## -Andre Dawson          3  500.0         N
+## -Andres Galarraga      4   91.5         N
+## -Alfredo Griffin      25  750.0         A
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# We have to make sure that all that go in here are numeric, so we have to create the numerics for ourselves in some cases when they have categorical variables }
+\CommentTok{# Make a model matrix as in the R lab video.}
+\NormalTok{X.model =}\StringTok{ }\KeywordTok{model.matrix}\NormalTok{(Salary ~}\StringTok{ }\NormalTok{.-}\DecValTok{1}\NormalTok{, }\DataTypeTok{data =} \NormalTok{Hitters)}
+\KeywordTok{head}\NormalTok{(X.model)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                   AtBat Hits HmRun Runs RBI Walks Years CAtBat CHits
+## -Alan Ashby         315   81     7   24  38    39    14   3449   835
+## -Alvin Davis        479  130    18   66  72    76     3   1624   457
+## -Andre Dawson       496  141    20   65  78    37    11   5628  1575
+## -Andres Galarraga   321   87    10   39  42    30     2    396   101
+## -Alfredo Griffin    594  169     4   74  51    35    11   4408  1133
+## -Al Newman          185   37     1   23   8    21     2    214    42
+##                   CHmRun CRuns CRBI CWalks LeagueA LeagueN DivisionW
+## -Alan Ashby           69   321  414    375       0       1         1
+## -Alvin Davis          63   224  266    263       1       0         1
+## -Andre Dawson        225   828  838    354       0       1         0
+## -Andres Galarraga     12    48   46     33       0       1         0
+## -Alfredo Griffin      19   501  336    194       1       0         1
+## -Al Newman             1    30    9     24       0       1         0
+##                   PutOuts Assists Errors NewLeagueN
+## -Alan Ashby           632      43     10          1
+## -Alvin Davis          880      82     14          0
+## -Andre Dawson         200      11      3          1
+## -Andres Galarraga     805      40      4          1
+## -Alfredo Griffin      282     421     25          0
+## -Al Newman             76     127      7          0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{y =}\StringTok{ }\NormalTok{Hitters$Salary}
+
+\CommentTok{# remove the NAs:}
+\NormalTok{y <-}\KeywordTok{na.omit}\NormalTok{(y)}
+
+\CommentTok{# Make a sequence of ridge regression models and plot:}
+\CommentTok{# When alpha equals 0, that is ridge reg and when alpha = 1 that is lasso}
+\CommentTok{# Elastic net is another option that is in between ridge and lasso}
+\NormalTok{fit.ridge =}\StringTok{ }\KeywordTok{glmnet}\NormalTok{(X.model, y, }\DataTypeTok{alpha =} \DecValTok{0}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(fit.ridge, }\DataTypeTok{xvar =} \StringTok{"lambda"}\NormalTok{)}
+\KeywordTok{grid}\NormalTok{(}\DataTypeTok{col =} \DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# We end up with a 20 x 100 matrix, meaning 20 variables and 100 different values of lambda }
+\end{Highlighting}
+\end{Shaded}
+
+\textbf{Question}: What is this trajectory plot is telling us?
+
+\subsubsection{Exercise}\label{exercise}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Divide entries in the first two columns by 10. Redo the fit and the
+  plot. Do any of the curves change substantially?
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# We've got to standardize!}
+\NormalTok{X.model2<-X.model}
+\NormalTok{X.model2[,}\DecValTok{1}\NormalTok{] <-}\StringTok{ }\NormalTok{X.model[,}\DecValTok{1}\NormalTok{] /}\StringTok{ }\DecValTok{10}
+\NormalTok{X.model2[,}\DecValTok{2}\NormalTok{] <-}\StringTok{ }\NormalTok{X.model[,}\DecValTok{2}\NormalTok{] /}\StringTok{ }\DecValTok{10}
+
+\NormalTok{fit.ridge2 =}\StringTok{ }\KeywordTok{glmnet}\NormalTok{(X.model2, y, }\DataTypeTok{alpha =} \DecValTok{0}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(fit.ridge2, }\DataTypeTok{xvar =} \StringTok{"lambda"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-10-1.pdf}
+
+It is wise to standardize the model features (so that the sum of squares
+of all columns now are 1).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# We're standardizing all }
+\NormalTok{for (j in }\DecValTok{1}\NormalTok{:}\DecValTok{20}\NormalTok{)\{X.model[,j] <-}\StringTok{ }\NormalTok{X.model[,j]/}\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{sum}\NormalTok{(X.model[,j]^}\DecValTok{2}\NormalTok{))\}}
+\NormalTok{fit.ridge3 =}\StringTok{ }\KeywordTok{glmnet}\NormalTok{(X.model, y, }\DataTypeTok{alpha =} \DecValTok{0}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(fit.ridge3, }\DataTypeTok{xvar =} \StringTok{"lambda"}\NormalTok{)}
+\KeywordTok{grid}\NormalTok{(}\DataTypeTok{col =} \DecValTok{4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+Now that all the features have similar magnitudes, there are more
+coefficients in the trajectory plot that have similar magnitudes.
+
+\paragraph{Now LASSO}\label{now-lasso}
+
+Now explore the lasso. Let's use the same model matrix, the standardized
+one we just created.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fit.lasso =}\StringTok{ }\KeywordTok{glmnet}\NormalTok{(X.model, y, }\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(fit.lasso)}
+\KeywordTok{grid}\NormalTok{(}\DataTypeTok{col =} \DecValTok{4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-12-1.pdf}
+
+This is a plot of the coefficient magnituges against the L1 norm of the
+coefficients (the sum of absolute values). If this is large, this means
+lambda must be small. The right side of the plot corresponds to the case
+with is no lambda. The left side of the plot corresponds to where lambda
+is as large as it gets.
+
+You can also make a LASSO plot against the value of \(\lambda\) which
+can be a little easier to talk about.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(fit.lasso,}\DataTypeTok{xvar =} \StringTok{"lambda"}\NormalTok{)}
+\KeywordTok{grid}\NormalTok{(}\DataTypeTok{col =} \DecValTok{4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-13-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Opt <-}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(fit.lasso, fit.lasso$lambda.min))}
+\CommentTok{# Is there a better way to get at the answer here than making it into a data frame? }
+\end{Highlighting}
+\end{Shaded}
+
+\textbf{Questions}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Which side of this plot corresponds to large values of \(\lambda\)?
+  Which side of this plot corresponds to small values of \(\lambda\)?
+  Which side of this plot corresponds most closely to regular
+  regression?
+\end{enumerate}
+
+Right and Left and Left
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  At a value of \(log \lambda = 1\), how many features have been removed
+  from the model?
+\end{enumerate}
+
+29
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  At a value of \(log \lambda = 3\), how many features remain in the
+  model?
+\end{enumerate}
+
+2 (3 if counting intercept)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  In what way does LASSO help us with the problem of feature selection?
+  Does Ridge Regression also help in that way?
+\end{enumerate}
+
+Ridge did not, but Lasso did.
+
+\subsubsection{Cross Validation}\label{cross-validation}
+
+So how do we choose the right value of lambda? As is becoming a common
+theme in this course, we'll use Cross Validation. And the glmnet package
+makes this very easy for us.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cv.lasso =}\StringTok{ }\KeywordTok{cv.glmnet}\NormalTok{(X.model,y,}\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(cv.lasso)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{inClass-03-20-2019_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# We have fewer and fewer predictors, so obviously it won't fit as well. }
+\CommentTok{# We can see that at some point, they are all just about the same, so we'll calculate how far left or right until I get an SD away from the best one }
+\CommentTok{# So if best is log lambda 2.5 and the one on the right is 4.5 in terms of log(Lambda), it will be more constrained with fewer vars. }
+\CommentTok{# We want least complex will still approximately same performance as the best one. Pretty constrained but still peforms as well as the rest. So in this case, the 4.5. }
+\end{Highlighting}
+\end{Shaded}
+
+The plot shows that as \(\lambda\) increases, the mean squared error
+increases as well due to a larger bias (since the coefficients are
+forced to be small). The plot stays fairly flat until about log(lambda)
+= 3 or so, in which case there are still six predictors in the model. As
+lambda increases further, these six predictors remain in the model but
+the estimated mean square error increases. So it seems that log(lambda)
+= 3 is a good choice.
+
+\paragraph{Coefficient Outputs}\label{coefficient-outputs}
+
+Notice the outputs of the fit is a matrix called beta: this has nrow
+equal to the total number of features in the model, and ncol equal to
+the number of different values of lambda that were computed.
+
+\textbf{Question}
+
+What does this matrix represent? How can we use it?
+
+\textbf{Exercise}
+
+Cross validation told us that a value of log-lambda of 3 is a pretty
+good bet. Extract the model coefficients that correspond to log-lambda
+of (approximately) 3. Recall, there should only be 6 non-zero
+coefficients.
+
+\paragraph{Predictions}\label{predictions}
+
+The predict function for these ``glmnet'' objects will allow us to
+specify which value of lambda we want. By default, this function return
+predictions for the full range of \(\lambda\) but you can also specify a
+single value.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lasso_prediction_full <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit.lasso, X.model[}\DecValTok{1}\NormalTok{:}\DecValTok{2}\NormalTok{,])}
+
+\NormalTok{lasso_prediction_best <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit.lasso, X.model[}\DecValTok{1}\NormalTok{:}\DecValTok{2}\NormalTok{,], }\DataTypeTok{s=}\NormalTok{fit.lasso$lambda[}\DecValTok{29}\NormalTok{])}
+\end{Highlighting}
+\end{Shaded}
+
+
+\end{document}

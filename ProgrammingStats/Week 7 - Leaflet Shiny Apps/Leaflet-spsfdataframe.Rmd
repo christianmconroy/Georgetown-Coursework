@@ -1,0 +1,98 @@
+---
+title: "Leaflet-sf/sp/data frame"
+output: html_document
+---
+
+
+Package
+sp and rgdal is used to assign and transform CRS in R:
+
+- library(rgdal)
+- library(sp)
+
+In R, the notation used to describe the CRS is proj4string from the PROJ.4 library. It looks like this:
+```{r,eval=FALSE}
++init=epsg:4121 +proj=longlat +ellps=GRS80
++datum=GGRS87 +no_defs +towgs84=-199.87,74.79,246.62
+```
+
+Ref: https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/OverviewCoordinateReferenceSystems.pdf
+
+```{r}
+if(!require(sp)){
+    install.packages("sp")
+    library(sp)
+}
+```
+
+```{r}
+if(!require(raster)){
+    install.packages("raster")
+    library(raster)
+}
+```
+
+```{r}
+if(!require(leaflet)){
+    install.packages("leaflet")
+    library(leaflet)
+}
+```
+
+```{r}
+if(!require(rgdal)){
+    install.packages("rgdal")
+    library(rgdal)
+}
+```
+
+
+# render spatial objects from the sp package using Leaflet
+```{r}
+library(sp)
+#library(raster)
+#library(dplyr)
+library(leaflet)
+#library(rgdal)
+
+# Load data using the sp package (Sp has built in shape files)
+getdata <- getData('GADM', country='UNITED STATES', level=0)
+loaddata <- spTransform(getdata, CRS("+init=epsg:4326"))
+
+# Create the leaflet map
+leaflet() %>% 
+  
+  # Add map tiles
+  addTiles() %>% 
+  
+  # Add a polygon on the map
+  addPolygons(data=loaddata, weight=2)
+```
+
+# Render spatial objects from data frame with latitude/longitude columns
+```{r}
+
+# Load the data frame (Manually create a CSV)
+cities <- read.csv(textConnection("
+City,Lat,Long,Pop
+Boston,42.3601,-71.0589,645966
+Hartford,41.7627,-72.6743,125017
+New York City,40.7127,-74.0059,8406000
+Philadelphia,39.9500,-75.1667,1553000
+Pittsburgh,40.4397,-79.9764,305841
+Providence,41.8236,-71.4222,177994
+"))
+
+# Create the leaflet map for the data
+leaflet(cities) %>% 
+  
+  # Add map tiles
+  addTiles() %>%
+  
+  # Add map markers
+  addCircles(lng = ~Long, lat = ~Lat, 
+             weight = 1, 
+             radius = ~sqrt(Pop) * 30, 
+             popup = ~City)
+```
+

@@ -1,0 +1,603 @@
+---
+title: "Statistical Learning HW 8 - SVMs"
+author: "Christian Conroy"
+date: "April 25, 2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+```{r setup, include=FALSE}
+require(knitr)
+require(pROC)
+require(ROCR)
+require(randomForest)
+require(gbm)
+require(MASS)
+require(e1071)
+require(ISLR)
+require(mlbench)
+require(caret)
+require(readxl)
+
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+
+opts_knit$set(root.dir ="/Users/chris/Documents/GeorgetownMPPMSFS/McCourtMPP/Semester 6 Spring 2019/StatLearning for Analytics")
+```
+
+
+# Book 3 (5 points)
+
+3. Here we explore the maximal margin classifier on a toy data set.
+
+(a) We are given n = 7 observations in p = 2 dimensions. For each observation, there is an associated class label. Sketch the observations.
+
+```{r message = FALSE}
+data <- data.frame(X1 = c(3, 2, 4, 1, 2, 4, 4),  
+                   X2 = c(4, 2, 4, 4, 1, 3, 1),
+                   Y = c("Red", "Red", "Red", "Red", "Blue", "Blue", "Blue"))
+
+plot(data$X1, data$X2, col = c("red", "blue")[data$Y], pch=19)
+
+```
+
+
+(b) Sketch the optimal separating hyperplane, and provide the equation for this hyperplane (of the form (9.1)).
+
+```{r}
+# Make sure it outputs plot here instead of plot viewer!
+
+# makegrid function
+make.grid=function(x,n=75){
+  grange=apply(x,2,range)
+  x1=seq(from=grange[1,1],to=grange[2,1],length=n)
+  x2=seq(from=grange[1,2],to=grange[2,2],length=n)
+  expand.grid(X1=x1,X2=x2)
+}
+
+x <- as.matrix(data[,c(1:2)])
+xgrid <- make.grid(x)
+# make model with cost = 1
+svm.model1 = svm(Y~.,data = data, kernel="linear",cost=1,scale=FALSE)
+ygrid = predict(svm.model1,xgrid)
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2,
+     main = "Cost = 1")
+beta=drop(t(svm.model1$coefs)%*%x[svm.model1$index,])
+beta0=svm.model1$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+
+svm.model1$coefs
+```
+
+The hyperplane -0.615X1 + 1.077X2 + 0.846 = 0 is shown. 
+
+(c) Describe the classification rule for the maximal margin classifier. It should be something along the lines of "Classify to Red if $\beta_0$ + $\beta_1 X_1$ + $\beta_2 X_2$ > 0, and classify to Blue otherwise." Provide the values for $\beta_0$, $\beta_1$, and $\beta_2$.
+
+ 
+The blue region is the set of points for which $-0.615X_1$ + $1.077X_2$ + 0.846 > 0, and the red region is the set of points for which $-0.615X_1$ + $1.077X_2$ + 0.846 < 0.
+
+(d) On your sketch, indicate the margin for the maximal margin hyperplane.
+
+```{r}
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2, 
+     main = "Cost = 1")
+points(x,col=c("red", "blue")[data$Y],pch=19)
+beta=drop(t(svm.model1$coefs)%*%x[svm.model1$index,])
+beta0=svm.model1$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+```
+
+(e) Indicate the support vectors for the maximal margin classifier.
+
+```{r}
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2, 
+     main = "Cost = 1")
+points(x,col=c("red", "blue")[data$Y],pch=19)
+points(x[svm.model1$index,],pch=5,cex=2)
+beta=drop(t(svm.model1$coefs)%*%x[svm.model1$index,])
+beta0=svm.model1$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+```
+
+(f) Argue that a slight movement of the seventh observation would not affect the maximal margin hyperplane.
+
+The maximal margin margin hyperplane is the separating hyperplane for which the margin is largest-that is, it is the hyperplane that has the farthest minimum distance to the training observations. So long as he seventh observation does not move closer to the boundary in a way that would change that farthest mi imum distance or move to a different side of the boundary, then moving the seventh observation will not affect the maximal margin hyperplane. 
+
+(g) Sketch a hyperplane that is not the optimal separating hyperplane, and provide the equation for this hyperplane.
+
+```{r}
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2, 
+     main = "Cost = 1")
+points(x,col=c("red", "blue")[data$Y],pch=19)
+points(x[svm.model1$index,],pch=5,cex=2)
+beta=drop(t(svm.model1$coefs)%*%x[svm.model1$index,])
+beta0=svm.model1$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+abline(-2, 2, col = "purple")
+```
+
+The hyperplane $2X_1$ + $X_2$ - 2 = 0 is shown.
+
+(h) Draw an additional observation on the plot so that the two classes are no longer separable by a hyperplane.
+
+```{r}
+plot(xgrid,col=c("red","blue")[as.numeric(ygrid)],pch=20,cex=.2, 
+     main = "Cost = 1")
+points(x,col=c("red", "blue")[data$Y],pch=19)
+points(x[svm.model1$index,],pch=5,cex=2)
+points(3.5, 1.5, pch = 19, col = "blue")
+beta=drop(t(svm.model1$coefs)%*%x[svm.model1$index,])
+beta0=svm.model1$rho
+abline(beta0/beta[2],-beta[1]/beta[2])
+abline((beta0-1)/beta[2],-beta[1]/beta[2],lty=2)
+abline((beta0+1)/beta[2],-beta[1]/beta[2],lty=2)
+abline(-2, 2, col = "purple")
+```
+
+# Book 7 (5 points)
+
+7. In this problem, you will use support vector approaches in order to predict whether a given car gets high or low gas mileage based on the Auto data set.
+
+```{r}
+data('Auto')
+head(Auto)
+```
+
+(a) Create a binary variable that takes on a 1 for cars with gas mileage above the median, and a 0 for cars with gas mileage below the median.
+
+```{r}
+Auto$abovemedmpg <- as.factor(ifelse((Auto$mpg > median(Auto$mpg)), 1, 0))
+Autoset <- Auto[,c(2:8, 10)]
+```
+
+(b) Fit a support vector classifier to the data with various values of cost, in order to predict whether a car gets high or low gas mileage. Report the cross-validation errors associated with different values of this parameter. Comment on your results.
+
+```{r}
+
+# Create Train and Test
+set.seed(1)
+train <- sample(nrow(Autoset),(nrow(Autoset) * .70), replace = FALSE)
+Auto_train <- Autoset[train,]
+Auto_test <- Autoset[-train,]
+
+```
+
+```{r}
+
+# SVM - Use Tune to run with different values of costs
+  # 10-fold cv sampling method built into tune
+tune_out_linear1 <- tune(svm, abovemedmpg ~ ., data = Auto_train, kernel = "linear", ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10)))
+
+tune_out_linear1$performances
+
+best_auto_linear1 <- tune_out_linear1$best.model
+
+summary(best_auto_linear1)
+```
+The best performance is for a cost of 10 with an error of 0.106. 
+
+(c) Now repeat (b), this time using SVMs with radial and polynomial basis kernels, with different values of gamma and degree and cost. Comment on your results.
+
+```{r}
+# Radial Kernel
+
+tune_out_linear2 <- tune(svm, abovemedmpg ~ ., data = Auto_train, kernel = "radial", ranges = list(cost = c(0.001, 0.01, 0.1), gamma = c(0.01, 0.1, 0.5), degree = c(1,2,3)))
+
+tune_out_linear2$performances
+
+best_auto_linear2 <- tune_out_linear2$best.model
+
+summary(best_auto_linear2)
+
+```
+The best model uses a cost of 0.1 and a gamma of 0.1 and 171 support vectors. It does not appear as if increasing degrees have any impact on the error. 
+
+```{r}
+# Polynomial Kernel
+tune_out_linear3 <- tune(svm, abovemedmpg ~ ., data = Auto_train, kernel = "polynomial", ranges = list(cost = c(0.001, 0.01, 0.1), gamma = c(0.01, 0.1, 0.5), degree = c(1,2,3)))
+
+tune_out_linear3$performances
+ 
+best_auto_linear3 <- tune_out_linear3$best.model
+
+summary(best_auto_linear3)
+
+```
+The best performance for the polynomial kernel is for the model with a cost of 0.01, a gamma of 0.5, and a degree 1, with an error of 0.115. Unlike the model where we used the radial kernel, it appears that the degree had an impact.  
+
+(d) Make some plots to back up your assertions in (b) and (c).
+Hint: In the lab, we used the plot() function for svm objects only in cases with p = 2. When p > 2, you can use the plot() function to create plots displaying pairs of variables at a time.
+
+Essentially, instead of typing plot(svmfit , dat) where svmfit contains your fitted model and dat is a data frame containing your data, you can type plot(svmfit , dat , x1???x4) in order to plot just the first and fourth variables. However, you must replace x1 and x4 with the correct variable names. To find out more, type ?plot.svm.
+
+```{r, fig.align="center", fig.width = 6, fig.height=4, eval = TRUE}
+
+# Run optimal modles on full dataset
+svm_linear <- svm(factor(abovemedmpg) ~ ., data = Autoset, kernel = "linear", cost = 10, gamma = 0.143) 
+svm_radial = svm(abovemedmpg ~ ., data = Autoset, kernel = "radial", cost = 0.1, gamma = 0.1) 
+svm_poly = svm(abovemedmpg ~ ., data = Autoset, kernel = "polynomial", cost = 0.01, degree = 1, 
+               gamma = 0.5, coef0=0) 
+
+# Add mpg back in for plotting 
+Autoset <- Auto[,c(2:8, 10)]
+Autoset$mpg <- Auto$mpg
+
+# For slicing the plot variables
+mean_acceleration <- mean(Autoset$acceleration)
+mean_weight <- mean(Autoset$weight)
+mean_horsepower <- mean(Autoset$horsepower)
+mean_displacement <- mean(Autoset$displacement)
+mean_mpg <- mean(Autoset$mpg)
+```
+
+# Linear Plots 
+
+```{r, fig.align="center", fig.width = 6, fig.height=4, eval = TRUE}
+
+par(mfrow=c(2,2))
+plot(svm_linear, Autoset, mpg ~ acceleration, slice = list(displacement = mean_displacement, horsepower = mean_horsepower))
+plot(svm_linear, Autoset, mpg ~ displacement,  slice = list(acceleration = mean_acceleration, horsepower = mean_horsepower))
+plot(svm_linear, Autoset, mpg ~ horsepower, slice = list(acceleration = mean_acceleration, displacement = mean_displacement))
+plot(svm_linear, Autoset, mpg ~ weight, slice = list(acceleration = mean_acceleration, displacement = mean_displacement))
+
+```
+
+# Radial Plots
+
+```{r, fig.align="center", fig.width = 6, fig.height=4, eval = TRUE}
+
+par(mfrow=c(2,2))
+plot(svm_radial, Autoset, mpg ~ acceleration, main = "Radial: mpg~acceleration",
+     slice = list(displacement = mean_displacement, horsepower = mean_horsepower))
+plot(svm_radial, Autoset, mpg ~ displacement, main = "Radial: mpg~displacement",
+     slice = list(acceleration = mean_acceleration, horsepower = mean_horsepower))
+plot(svm_radial, Autoset, mpg ~ horsepower, main = "Radial: mpg~horsepower",
+     slice = list(acceleration = mean_acceleration, displacement = mean_displacement))
+plot(svm_radial, Autoset, mpg ~ weight, main = "Radial: mpg~weight",
+     slice = list(acceleration = mean_acceleration, displacement = mean_displacement))
+
+```
+
+# Polynomial Plots
+
+```{r, fig.align="center", fig.width = 6, fig.height=4, eval = TRUE}
+
+par(mfrow=c(2,2))
+plot(svm_poly, Autoset, mpg ~ acceleration, slice = list(displacement = mean_displacement, horsepower = mean_horsepower))
+plot(svm_poly, Autoset, mpg ~ displacement, slice = list(acceleration = mean_acceleration, horsepower = mean_horsepower))
+plot(svm_poly, Autoset, mpg ~ horsepower, slice = list(acceleration = mean_acceleration, displacement = mean_displacement))
+plot(svm_poly, Autoset, mpg ~ weight, slice = list(acceleration = mean_acceleration, displacement = mean_displacement))
+
+```
+
+# Book 8 (5 points)
+
+8. This problem involves the OJ data set which is part of the ISLR package.
+
+(a) Create a training set containing a random sample of 800 observations, and a test set containing the remaining observations.
+
+```{r message = FALSE, warning= FALSE}
+data('OJ')
+head(OJ)
+names(OJ)
+
+# Factorize Purchase Variable 
+OJ$Purchase <- as.factor(OJ$Purchase)
+# Create Train and Test
+set.seed(1)
+train <- sample(nrow(OJ), 800, replace = FALSE)
+OJ_train <- OJ[train,]
+OJ_test <- OJ[-train,]
+
+```
+
+(b) Fit a support vector classifier to the training data using cost=0.01, with Purchase as the response and the other variables as predictors. Use the summary() function to produce summary statistics, and describe the results obtained.
+
+```{r}
+svm.model1 = svm(Purchase ~., data = OJ_train, kernel="linear",cost=0.01,scale=FALSE)
+summary(svm.model1)
+```
+According to the summary statistics, when we use a linear kernal, we end up with 615 support vectors in the process of classifying the two purchase groups. 
+
+(c) What are the training and test error rates?
+
+```{r warning = FALSE, message = FALSE}
+
+fitted_train <- attributes(predict(svm.model1, OJ_train, decision.values=TRUE))$decision.values
+auc(OJ_train$Purchase, fitted_train)
+
+fitted_test <- attributes(predict(svm.model1, OJ_test, decision.values=TRUE))$decision.values
+auc(OJ_test$Purchase, fitted_test)
+
+```
+(d) Use the tune() function to select an optimal cost. Consider values in the range 0.01 to 10.
+
+```{r}
+
+tune_out_linear <- tune(svm, Purchase ~ ., data = OJ_train, kernel = "linear", ranges = list(cost = c(0.01, 0.1, 1, 5, 10)))
+
+tune_out_linear$performances
+ 
+best_oj_linear <- tune_out_linear$best.model
+
+summary(best_oj_linear)
+
+```
+The best model is the model with a cost of 0.1.
+
+(e) Compute the training and test error rates using this new value for cost.
+
+```{r warning = FALSE, message = FALSE}
+
+fitted_train <- attributes(predict(best_oj_linear, OJ_train, decision.values=TRUE))$decision.values
+auc(OJ_train$Purchase, fitted_train)
+
+fitted_test <- attributes(predict(best_oj_linear, OJ_test, decision.values=TRUE))$decision.values
+auc(OJ_test$Purchase, fitted_test)
+
+```
+
+(f) Repeat parts (b) through (e) using a support vector machine with a radial kernel. Use the default value for gamma.
+
+```{r}
+svm.model2 = svm(Purchase ~., data = OJ_train, kernel="radial", cost=0.01,scale=FALSE)
+summary(svm.model2)
+```
+
+According to the summary statistics, when we use a radial kernal, we end uo with 628 support vectors in the process of classifying the two purchase groups. 
+
+```{r warning = FALSE, message = FALSE}
+
+train_error_radial <- attributes(predict(svm.model2, OJ_train, decision.values=TRUE))$decision.values
+auc(OJ_train$Purchase, train_error_radial)
+
+test_error_radial <- attributes(predict(svm.model2, OJ_test, decision.values=TRUE))$decision.values
+auc(OJ_test$Purchase, test_error_radial)
+
+```
+
+```{r}
+tune_out_radial <- tune(svm, Purchase ~ ., data = OJ_train, kernel = "radial", ranges = list(cost = c(0.01, 0.1, 1, 5, 10)))
+
+tune_out_radial$performances
+
+best_oj_radial <- tune_out_radial$best.model
+
+summary(best_oj_radial)
+```
+The best model is the one with a cost of 10. 
+
+```{r warning = FALSE, message = FALSE}
+
+best_train_error_radial <- attributes(predict(best_oj_radial, OJ_train, decision.values=TRUE))$decision.values
+auc(OJ_train$Purchase, best_train_error_radial)
+
+best_test_error_radial <- attributes(predict(best_oj_radial, OJ_test, decision.values=TRUE))$decision.values
+auc(OJ_test$Purchase, best_test_error_radial)
+
+```
+
+(g) Repeat parts (b) through (e) using a support vector machine with a polynomial kernel. Set degree=2.
+
+```{r}
+svm.model3 = svm(Purchase ~., data = OJ_train, kernel="polynomial", cost=0.01, degree = 2, scale=FALSE)
+summary(svm.model3)
+```
+According to the summary statistics, when we use a polynomial kernal, we end uo with 331 support vectors in the process of classifying the two purchase groups.
+
+```{r warning = FALSE, message = FALSE}
+
+train_error_polynomial <- attributes(predict(svm.model3, OJ_train, decision.values=TRUE))$decision.values
+auc(OJ_train$Purchase, train_error_polynomial)
+
+test_error_polynomial <- attributes(predict(svm.model3, OJ_test, decision.values=TRUE))$decision.values
+auc(OJ_test$Purchase, test_error_polynomial)
+
+```
+
+```{r}
+tune_out_polynomial <- tune(svm, Purchase ~ ., data = OJ_train, kernel = "polynomial", degree=2, ranges = list(cost = c(0.01, 0.1, 1, 5, 10)))
+
+tune_out_polynomial$performances
+
+best_oj_polynomial <- tune_out_polynomial$best.model
+
+summary(best_oj_polynomial)
+```
+The best model is the model with a cost of 10. 
+
+```{r warning = FALSE, message = FALSE}
+
+best_train_error_polynomial <- attributes(predict(best_oj_polynomial, OJ_train, decision.values=TRUE))$decision.values
+auc(OJ_train$Purchase, best_train_error_polynomial)
+
+best_test_error_polynomial <- attributes(predict(best_oj_polynomial, OJ_test, decision.values=TRUE))$decision.values
+auc(OJ_test$Purchase, best_test_error_polynomial)
+
+```
+
+(h) Overall, which approach seems to give the best results on this data?
+
+The error for the train and test for the linear, radial, and polynomial with the optimal cost are 0.906 and 0.879, 0.931 and 0.868, and 0.912 and 0.887, respectively. Given that we are using auc for the error rate, the best results appear to come from the polynomial model. While there may bne some overfitting given the discrepancy between the train and test error, the test error is the highest on the polynomial model. 
+
+# Extra 63 (5 points)
+
+In this problem, we use the BreastCancer data, which comes as part of the package mlbench. Install the
+package and read the description of the data.
+
+We want to predict the Class of an observation (benign or malignant).
+
+```{r}
+data('BreastCancer')
+head(BreastCancer)
+
+BreastCancer$Id <- NULL
+
+# Create Train and Test
+set.seed(1)
+train <- sample(nrow(BreastCancer),(nrow(BreastCancer) * .70), replace = FALSE)
+BC_train <- BreastCancer[train,]
+BC_test <- BreastCancer[-train,]
+
+```
+
+a) Fit a logistic model to the data. Plot the ROC curve.
+
+```{r}
+
+fit <- glm(Class ~ ., data = BC_train, family=binomial)
+
+BC_train$pred <- predict(fit, BC_train, type = "response")
+
+r1 <- roc(as.numeric(BC_train$Class), BC_train$pred)
+
+BC_test$pred <- predict(fit, newdata = BC_test, type = "response")
+
+r2 <- roc(as.numeric(BC_test$Class), BC_test$pred)
+
+par(mfrow=c(1,2))
+plot(r1, main = "Train ROC")
+plot(r2, main = "Test ROC")
+
+# Is 1 what we expected for AUC here, seems ods
+
+```
+
+b) Use a support vector classifier (linear kernels) to classify. Plot the ROC curve in the plot you made in part a).
+
+```{r warning=FALSE, message=FALSE}
+
+svm.model <- svm(Class ~ ., data = BC_train, kernel="linear", scale=FALSE)
+
+BC_train$pred <- attributes(predict(svm.model, BC_train, decision.values=TRUE, na.action = na.exclude))$decision.values
+
+r3 <- roc(as.numeric(BC_train$Class), BC_train$pred)
+
+BC_test$pred <- attributes(predict(svm.model, BC_test, decision.values=TRUE, na.action = na.exclude))$decision.values
+
+r4 <- roc(as.numeric(BC_test$Class), BC_test$pred)
+
+par(mfrow=c(1,2))
+roc_train <- plot(r1, print.auc = TRUE, col = "blue", main = "Train ROC")
+#And for the second ROC curve you need to change the y position of the AUC and use add the plot the two curves on the same plot:
+roc_train <- plot(r3, print.auc = TRUE, col = "green", print.auc.y = .4, add = TRUE)
+
+roc_test <- plot(r2, print.auc = TRUE, col = "blue", main = "Test ROC")
+#And for the second ROC curve you need to change the y position of the AUC and use add the plot the two curves on the same plot:
+roc_test <- plot(r4, print.auc = TRUE, col = "green", print.auc.y = .4, add = TRUE)
+
+```
+
+c) Use SVMs with polynomial kernels for the same classification task, with several different degrees and
+oterwise using the same (hyper)parameters. Plot the ROC curves.
+
+```{r warning = FALSE, message = FALSE}
+
+tune_out_polynomial <- tune(svm, Class ~ ., data = BC_train, kernel = "polynomial", ranges = list(degree = c(1, 2, 3, 4)))
+
+tune_out_polynomial$performances
+# 
+best_bc_polynomial <- tune_out_polynomial$best.model
+
+BC_train$pred_polynomial <- attributes(predict(best_bc_polynomial, BC_train, decision.values=TRUE, na.action = na.exclude))$decision.values
+
+BC_train$pred <- attributes(predict(svm.model, BC_train, decision.values=TRUE, na.action = na.exclude))$decision.values
+
+r5 <- roc(as.numeric(BC_train$Class), BC_train$pred_polynomial)
+
+BC_test$pred_polynomial <- attributes(predict(best_bc_polynomial, BC_test, decision.values=TRUE, na.action = na.exclude))$decision.values
+
+r6 <- roc(as.numeric(BC_test$Class), BC_test$pred_polynomial)
+
+par(mfrow=c(1,2))
+roc_train <- plot(r1, print.auc = TRUE, col = "blue", main = "Train ROC")
+#And for the second ROC curve you need to change the y position of the AUC and use add the plot the two curves on the same plot:
+roc_train <- plot(r3, print.auc = TRUE, col = "green", print.auc.y = .4, add = TRUE)
+roc_train <- plot(r5, print.auc = TRUE, col = "red", print.auc.y = .6, add = TRUE)
+
+
+roc_test <- plot(r2, print.auc = TRUE, col = "blue", main = "Test ROC")
+#And for the second ROC curve you need to change the y position of the AUC and use add the plot the two curves on the same plot:
+roc_test <- plot(r4, print.auc = TRUE, col = "green", print.auc.y = .4, add = TRUE)
+roc_test <- plot(r6, print.auc = TRUE, col = "red", print.auc.y = .6, add = TRUE)
+
+```
+
+d) Compare the results of a), b), and c). Are the support vector classifier and logistic regression comparable?
+
+On the train dataset, the SVC linear and polynomial and the logistic regression are identical. They are also very similar on the test ROC, though the polynomial SVM seems to perform the best with an AUC of 0.988. 
+
+# Extra 66 (5)
+
+This problem uses the MNIST image classification data, available as mnist_all.RData that were used
+earlier. We want to distinguish between 3 and 8. Extract the relevant training and test data and place them in suitable data frames. Remove all variables (pixels) with zero variance from the training data and remove these also from the test data.
+
+```{r message = FALSE}
+mnist <-load('mnist_all.RData')
+
+mnist_train <- data.frame(train$x, train$y)
+mnist_train <- mnist_train[mnist_train$train.y == 3 | mnist_train$train.y == 8,]
+# Rremove zero variance variables (161 in total)
+zerovalist <- which(apply(mnist_train, 2, var) == 0)
+mnist_train <- mnist_train[ - zerovalist]
+
+mnist_test <- data.frame(test$x, test$y) 
+mnist_test <- mnist_test[mnist_test$test.y == 3 | mnist_test$test.y == 8,]
+mnist_test <- mnist_test[ - zerovalist]
+
+```
+
+a) Fit a random forest model to the training data. Experiment with hyperparameters until you get a
+very good classification on the training data. Then evaluate the model on the test data and make a
+confusion matrix.
+
+```{r message = FALSE, warning= FALSE}
+
+rf.mnist <- randomForest(factor(train.y) ~ .,data= mnist_train, mtry=100, ntree=25, importance =TRUE)
+
+yhat.rf = predict(rf.mnist ,newdata= mnist_test)
+
+table(mnist_test$test.y, yhat.rf)
+
+confusionMatrix(table(yhat.rf, mnist_test$test.y))
+```
+
+b) Can you get a similar or better performance on the training data if you use an SVM classifier with
+kernel = "radial"? Experiment with hyperparameters. Do not report all trials, only the best result.
+Then evaluate the model on the test data and make a confusion matrix.
+
+```{r}
+# Downsample to decrease svm runtime 
+
+downsamp <- seq(1, ncol(mnist_train), 4)
+mnist_train2 <- mnist_train[ downsamp]
+mnist_train2$train.y <- mnist_train$train.y
+mnist_test2 <- mnist_test[ downsamp]
+mnist_test2$test.y <- mnist_test$test.y
+
+```
+
+```{r}
+# Tune function took far too long with this many, so just did default svm here
+svm_radial <- svm(factor(train.y) ~ ., data= mnist_train2, kernel = "radial", probability = TRUE)
+svm_radial
+```
+
+```{r}
+
+mnist_test2$Pred_Class <- predict(svm_radial, mnist_test2, probability = TRUE)
+
+confusionMatrix(table(mnist_test2$test.y, mnist_test2$Pred_Class))
+
+```
+
+c) Compare the results of a) and b). Is there a clear difference in performance? Do any of these methods
+tend to overfit? Do their runtimes differ substantially?
+
+The runtimes differ substantially. The svm, especially when we use tune to test out different parameters, takes significantly longer than the logistic regressions. In terms of performance, the random forest model shows an accuracy rate of 0.989 compared to the accuracy rate of 0.981 for the radial model with a cost of 1 and a gamma of 0.00641, meaning the random forest model performs slightly better, though the difference in performance is not substantial. 

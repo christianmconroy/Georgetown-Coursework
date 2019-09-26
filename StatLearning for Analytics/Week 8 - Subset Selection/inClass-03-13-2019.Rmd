@@ -1,0 +1,163 @@
+---
+title: "inClass-03/13/2019"
+output: html_document
+---
+
+```{r}
+library(ISLR)
+library(leaps)
+```
+
+## Subset Selection
+
+### Best Subset
+
+If we have a data set with $p$ predictors, the total number of possible linear models we could attempt is $2^p$. Why is that?
+
+With Best Subset selection, we do a brute-force search and evaluate all $2^p$ models and look for the best one (see Figure 6.1 in the book). Why is it important that we only make comparisons between models that have the same number of predictors? Why can we just choose the best model from the set of the $2^p$ models we evaluated?
+
+*Exercise*
+Try Best Subset with the Hitters data using the regsubsets function in the leaps package.
+```{r}
+data(Hitters)
+names(Hitters)
+```
+
+```{r}
+# Correct Way
+# Why set a maximum?
+
+full_subsets = regsubsets(Salary ~ ., data=Hitters, nvmax = 19, method= c("forward"))
+full_subsets_summary = summary(full_subsets, matrix.logical = TRUE)
+names(full_subsets_summary)
+
+full_subsets_summary$cp
+full_subsets_summary$bic
+full_subsets_summary$adjr2
+full_subsets_summary
+
+# For model with one var, 
+```
+
+```{r}
+#  Plot the CP value
+plot(full_subsets_summary$cp,xlab="Number of Variables",ylab="Cp",type='l')
+# Find and mark the min value
+c=which.min(full_subsets_summary$cp)
+points(c,full_subsets_summary$cp[c],col="red",cex=2,pch=20)
+
+```
+
+```{r}
+#  Plot the BIC value
+plot(full_subsets_summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+# Find and mark the min value
+c=which.min(full_subsets_summary$bic)
+points(c,full_subsets_summary$bic[c],col="red",cex=2,pch=20)
+
+```
+
+```{r}
+#  Plot the BIC value
+plot(full_subsets_summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+# Find and mark the min value
+c=which.min(full_subsets_summary$bic)
+points(c,full_subsets_summary$bic[c],col="red",cex=2,pch=20)
+
+```
+
+```{r}
+#  Plot the Cp value
+plot(full_subsets_summary$adjr2,xlab="Number of Variables",ylab="Cp",type='l')
+# Find and mark the min value
+c=which.min(full_subsets_summary$adjr2)
+points(c,full_subsets_summary$adjr2[c],col="red",cex=2,pch=20)
+
+```
+
+
+```{r}
+# set the seed to make your partition reproductible
+full_subsets = regsubsets(Salary ~ ., data=Hitters_train)
+full_subsets_summary = summary(full_subsets, matrix.logical=TRUE)
+full_subsets_summary
+names(full_subsets_summary)
+full_subsets_summary$cp
+full_subsets_summary$bic
+
+```
+
+```{r}
+#  Plot the BIC value
+plot(full_subsets_summary$rss,xlab="Number of Variables",ylab="Error",type='l')
+# Find and mark the min value
+c=which.min(full_subsets_summary$rss)
+points(c,full_subsets_summary$rss[c],col="red",cex=2,pch=20)
+
+```
+
+### Forward Stepwise
+
+For computational savings, we can turn to Forward Stepwise which doesn't compute $2^p$ models but a much smaller set. Forward Stepwise proceeds through greedy search. How does Forward Stepwise proceed? What are the limitations?
+
+**Exercise**
+Try Forward Stepwise with the Hitters data. 
+
+### Backward Stepwise
+
+
+
+
+## Model Comparison Metrics
+
+All of the following metrics are based on the idea of trading off a model's goodness-of-fit with the model's flexibility. That is, they are all a quantification of how we should _penalize_ models with more parameters. Their only major differences are how they quantify this penalty. 
+
+The following formula apply specifically to the case of linear regression. Therefore, the goodness-of-fit metric is the RSS. But these metrics have a more generic form which can be applied to any statistical model, and where the goodness-of-fit is quantified by the maxkimum of the Likelihood ($\hat{L}$).
+
+### Mallow's C
+\[
+C_p = \frac{1}{n}(RSS + 2d\hat{\sigma}^2)
+\]
+
+
+### Akaike Information Criterion
+\[
+AIC = \frac{1}{n \hat{\sigma}^2}(RSS + 2d\hat{\sigma}^2)
+\]
+ or more generally
+
+\[
+AIC = 2d - 2ln(\hat{L})
+\]
+
+### Bayesian Information Criterion
+
+\[
+BIC = \frac{1}{n \hat{\sigma}^2}(RSS + log(n)d\hat{\sigma}^2)
+\]
+
+or more generally 
+
+\[
+BIC = ln(n)d - 2ln(\hat{L})
+\]
+
+### Adjusted R Squared
+
+\[
+Adj R^2 = 1 - \frac{RSS/(n-d-1)}{TSS/(n-1)}
+\]
+
+
+**Exercise**
+Let's return to the Hitters data and Best Subset selection. From the outputs of regsubsets, we can obtain metrics like BIC for each sub-model with K predictors.
+
+```{r, eval=F}
+full_subsets = regsubsets(Salary ~ ., data=Hitters, nvmax = 19, method= c("forward"))
+full_subsets_summary = summary(full_subsets)
+names(full_subsets_summary)
+```
+
+Make a few plots showing BIC, and Mallow's C, and 1-AdjustedRsquared. Are the different metrics in rough agreement?
+
+Question: These metrics are evaluted with the full training set. Another way we can approach the problem of model selection is to use cross validation. What are the pros and cons of each approach?

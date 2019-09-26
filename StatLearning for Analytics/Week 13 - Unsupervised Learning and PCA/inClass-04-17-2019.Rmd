@@ -1,0 +1,415 @@
+---
+title: "In Class 04-17-2019"
+output: html_document
+---
+
+
+```{r}
+# install.packages('topicmodels')
+library(topicmodels)
+# install.packages('dbscan')
+library(dbscan)
+```
+
+```{r, echo = F}
+#install.packages('RnavGraphImageData')
+library(RnavGraphImageData)
+# install.packages('deldir')
+library(deldir)
+```
+
+
+Preparation: Set a seed and define three functions for demo purposes. 
+```{r}
+set.seed(999)
+makespiral = function(s,r1,r2,theta1,dtheta){
+   r = r1 + s*(r2-r1)
+   theta = theta1 + s*dtheta
+   return(c(r*cos(theta),r*sin(theta)))
+}
+
+imageoliv = function(x){ 
+  y = matrix(x,ncol = 64)
+  y = t(y[seq(64,1,by = -1),])
+  image(y,col = gray((0:255)/256))
+}
+
+```
+
+
+# K-Means
+
+Last week, we discusssed the K-Means clustering algorithm. Our discussion was conceptual, and we talked about the iterative process of assigning labels and centroids. 
+
+Here is a syntethic dataset with two clusters.
+
+```{r}
+makelinear = function(N,dist, makeplot = T){
+  x=matrix(rnorm(4*N),2*N,2)
+  y=rep(c(-1,1),c(N,N))
+  x[y==1,]=x[y==1,] + dist
+  if(makeplot){plot(x,col=y+3,pch=19)}
+  return(list(x=x,y=y))
+}
+```
+
+```{r}
+A = makelinear(100, dist = 4.5, makeplot = F)
+x = A$x
+y = A$y
+linear.data1 = data.frame(x,y=as.factor(y))
+plot(x[,1],x[,2], col = y+3)
+```
+
+In your groups, write your own implementation of the K-Means clustering algorithm. Some things to think about:
+
+1. Within your group, discuss what the iterative steps were for the algorithm. What the is the starting point? What is the update rule for the centroids? What is the update rule for the "assignment" of each data point to a cluster?
+
+2. What data structures might you use for implementing this algorithm? DataFrame or Vectors would be fine, just think about what you need to keep track of during each iteration.
+
+3. Within your implementation, create a way to visualize our 2D dataset during each implementation. That is, it is helpful to visualize the cluster "assignments" and centroids during each iteration. 
+
+
+
+### K-Means Clustering for $N(0,1)$ Data
+Now that we have an intuition for this algorithm, we can use built-in R functions. These come with lots of helpful outputs.
+
+Make a set of 2-D data from a standard normal distribution and plot them. Then apply k-means clustering with $K = 5$ clusters.
+
+```{r, fig.width=5}
+N = 200 # number of points
+X = matrix(rnorm(2*N), ncol = 2)
+plot(X[,1],X[,2])
+km.out=kmeans(X,5,nstart=15)
+names(km.out)
+```
+
+Take a look at the first few elements of the list.
+
+```{r}
+head(km.out$cluster,10)
+km.out$centers
+```
+
+Each row of the \$centers matrix contains the coordinates of the centroid  of the cluster with that number. Confirmation for cluster 1:
+```{r}
+colMeans(X[km.out$cluster==1,])
+```
+
+Look at some of the other output of kmeans:
+```{r}
+km.out$totss
+km.out$withinss
+km.out$betweenss
+sum(km.out$withinss) + km.out$betweenss == km.out$totss
+```
+Do another k-means with another random start and look at the \texttt{betweenss}, i.e. the sum of squared distances between the cluster centers. It is different from the previous result.
+```{r}
+set.seed(129)
+km.out1=kmeans(X,5,nstart=1)
+km.out1$betweenss
+```
+
+More output:
+```{r}
+km.out$tot.withinss
+km.out$size
+km.out$iter
+```
+
+
+Draw boundaries between clusters. These are straight lines. Then draw the clusters with colors indicating cluster numbers. 
+```{r, fig.width= 7}
+par(mfrow = c(1,2))
+boundaries = deldir(km.out$centers[,1], km.out$centers[,2])
+plot(boundaries, wlines = 'tess', ylim = c(-2,2),xlim = c(-2,2), lwd = 3)
+plot(boundaries, wlines = 'tess', ylim = c(-2,2),xlim = c(-2,2), lwd = 3)
+points(X,col=km.out$cluster,pch=19,cex = .7)
+```
+
+
+# Hierarchical Clustering
+With complete linkage, cutting at 5 clusters
+
+```{r, fig.width=6}
+par(mfrow = c(1,2))
+clust.complete=hclust(dist(X),method="complete")
+plot(clust.complete, cex = .2)
+clust.cut=cutree(clust.complete,5)
+plot(X[,1],X[,2],col = clust.cut, cex = .5, lwd = 3)
+
+```
+
+With single linkage, cutting at 5 clusters
+
+```{r, fig.width=6}
+par(mfrow = c(1,2))
+clust = hclust(dist(X),method="single")
+plot(clust, cex = .2)
+clust.cut=cutree(clust,5)
+plot(X[,1],X[,2],col = clust.cut, cex = .5, lwd = 3)
+```
+
+
+With average linkage, cutting at 5 clusters
+
+```{r, fig.width=6}
+par(mfrow = c(1,2))
+clust = hclust(dist(X),method="average")
+plot(clust, cex = .2)
+clust.cut=cutree(clust,5)
+plot(X[,1],X[,2],col = clust.cut, cex = .5, lwd = 3)
+```
+
+
+## A Special Example 
+
+Points that are arranged in spiral form. The colors are there to show the spirals.
+
+```{r, echo=F, fig.width=5}
+N = 50 # nmake N points per spiral arm
+k = 4 # make k arms
+r1 = 1
+r2 = 3
+dtheta = 2*pi
+myspiral = data.frame(x=rep(NA,k*N), y = rep(NA,k*N),id = rep(1:k, each = N))
+ss = seq(0,1,length = N)
+for (j in 1:N){
+for (m in 1:k){
+myspiral[j + (m-1)*N,1:2] <- makespiral(ss[j],r1,r2,2*pi*m/k,dtheta)
+}
+}
+plot(y ~ x, data = myspiral,col = myspiral$id,lwd = 3, pch = 19)
+X = as.matrix(myspiral[,1:2])
+```
+
+Try to recover the spiral arms. First use k-means, do you think k-means will work well here? Why or why not?
+
+```{r}
+kn = 4 # number of clusters
+km.out=kmeans(X,kn,nstart=15)
+plot(X,col=km.out$cluster,cex=2,pch=1,lwd=2)
+```
+
+This is a failure. Next try hierarchical clustering with complete linkage.
+
+```{r, fig.width=5}
+clust = hclust(dist(X),method="complete")
+clust.cut=cutree(clust,4)
+plot(y ~ x, data = myspiral, col = clust.cut, cex = 2, lwd = 2)
+points(y ~ x, data = myspiral, col = myspiral$id, pch = 19)
+```
+
+This does not work either. However, single linkage works, due to "chaining".
+
+```{r,fig.width=5}
+clust.single=hclust(dist(X),method="single")
+clust.cut=cutree(clust.single,4)
+plot(y ~ x, data = myspiral, col = clust.cut, lwd = 2)
+```
+
+
+
+## The Olivetti Face Data
+
+This is a dataset of 400 grayscale images, each with $64 \times 64$ pixels. The images are stored in a $4096 \times 400$ data frame. Let's look at a few of them.
+
+```{r,fig.width=8, fig.height=3, eval=FALSE}
+par(mfrow = c(2,2))
+data(faces)
+head(faces[,1])
+imageoliv(faces[,1])
+imageoliv(faces[,2])
+imageoliv(faces[,301])
+imageoliv(faces[,350])
+```
+
+Apply k-means clustering with $k = 3$ clusters to find "facial types". Then plot the three centroids ("average faces").
+```{r,fig.width=8, fig.height=3, eval=FALSE}
+par(mfrow = c(1,3))
+X = t(as.matrix(faces))
+km.faces = kmeans(X, 3,nstart = 10)
+imageoliv(km.faces$centers[1,])
+imageoliv(km.faces$centers[2,])
+imageoliv(km.faces$centers[3,])
+```
+ As an example, we plot six faces from cluster \#2.
+
+```{r,fig.width=8, fig.height=3, eval=FALSE}
+par(mfrow = c(1,3))
+X1 = X[km.faces$cluster == 2,]
+index = sample(length(X1[,1]),6,replace = F)
+for (j in 1:6){
+  imageoliv(X1[index[j],])
+}
+```
+
+Now apply hierachical clustering. This will allows us to identify very similar faces.
+
+The \$merge matrix of the output tells us which objects are merged into clusters at which steps. The first images to be merged are \#301 and \#308. So these are very similar faces. Much further along, images \#7 and \#9 are also merged into a cluster. We plot these as well to examine their similarity. 
+
+Evidently the method is quite effective at identifying similar faces.
+
+```{r,fig.width=6, fig.height=3, eval=FALSE}
+par(mfrow = c(1,2))
+clust.faces  = hclust(dist(X),method="complete")
+head(clust.faces$merge)
+clust.faces$merge[200:205,]
+imageoliv(faces[,-clust.faces$merge[1,1]])
+imageoliv(faces[,-clust.faces$merge[1,2]])
+imageoliv(faces[,-clust.faces$merge[2,1]])
+imageoliv(faces[,-clust.faces$merge[2,2]])
+imageoliv(faces[,-clust.faces$merge[3,1]])
+imageoliv(faces[,-clust.faces$merge[3,2]])
+imageoliv(faces[,7])
+imageoliv(faces[,9])
+```
+
+# DBSCAN
+
+```{r}
+dbscan_clust <- dbscan(linear.data1[,c(1,2)], eps=1)
+plot(linear.data1[,c(1,2)], col=dbscan_clust$cluster+1L)
+
+hullplot(linear.data1[,c(1,2)], dbscan_clust)
+```
+
+### Exercise
+ The hyperparameter epsilon controls how "far apart" different points can be in order to be considered in the same cluster. Similarly, it controls the balance of which points are considered outliers. Explore changing epsilon from very small to very large and observe the impact on the clusters and outliers. Do  this for the both the linearly separable data and the spiral data. 
+
+## Topic Modeling (Latent Dirichlet Allocation)
+
+Introduction to LDA (on board)
+
+And now into some code. We'll load in a dataset of news articles.
+
+```{r, eval=FALSE}
+data("AssociatedPress")
+AssociatedPress
+names(AssociatedPress)
+```
+
+This dataset is already in the form of a DocumentTermMatrix. Typically, it'll take a good amount of data wrangling to get from your raw documents into this DTM form, but luckily this has been done for us.
+
+```{r, eval=FALSE}
+# these are the "terms" in the vocabulary
+head(AssociatedPress$dimnames[[2]],50)
+```
+
+The representation that is stored here is that of a sparse matrix where all we store are the triples of (document ID, word ID, count). This DocumentTermMatrix class refers to these as (i,j,v).
+
+We can fit these documents with a topic model.
+
+```{r, eval=FALSE}
+ap_lda <- LDA(AssociatedPress, k = 4, control = list(seed = 1234))
+```
+
+```{r, eval=FALSE}
+topics <- as.matrix(topics(ap_lda))
+```
+
+```{r, eval=FALSE}
+terms <- as.matrix(terms(ap_lda,10))
+```
+
+```{r, eval=FALSE}
+#distribution over topics per documents
+topicProbabilities <- as.data.frame(ap_lda@gamma)
+head(topicProbabilities)
+```
+
+### LDA Visualization
+
+We can use the very cool LDAviz package to create some interactive visualizations of our fitted LDA models. This package creates an in-browser interactive dashboard built on R and javascript. 
+
+```{r, eval= FALSE}
+install.packages('LDAvis')
+library("LDAvis")
+```
+
+```{r, eval = FALSE}
+# this function formats the outputs from topicsmodels package into
+# a form that LDAviz package expects
+# adapted from https://www.r-bloggers.com/a-link-between-topicmodels-lda-and-ldavis/
+
+topicmodels_json_ldavis <- function(fitted, doc_term){
+    # Required packages
+    library(topicmodels)
+    library(dplyr)
+    library(stringi)
+    library(tm)
+    library(LDAvis)
+
+    # Find required quantities
+    phi <- posterior(fitted)$terms %>% as.matrix
+    theta <- posterior(fitted)$topics %>% as.matrix
+    vocab <- colnames(phi)
+    doc_length <- vector()
+
+    for (i in 1:nrow(doc_term)) {
+        doc_length <- c(doc_length, rowSums(as.matrix(doc_term[i,])))
+    }
+
+    temp_frequency <- inspect(doc_term)
+    freq_matrix <- data.frame(ST = colnames(temp_frequency),
+                              Freq = colSums(temp_frequency))
+    rm(temp_frequency)
+
+    # Convert to json
+    json_lda <- LDAvis::createJSON(phi = phi, theta = theta,
+                            vocab = vocab,
+                            doc.length = doc_length,
+                            term.frequency = freq_matrix$Freq)
+
+    return(json_lda)
+}
+```
+
+### TwentyNewsgroup
+We'll use a pre-fit LDA model that has been trained for a long time. This is generated from news sources.
+
+```{r, eval= FALSE}
+#json <- topicmodels_json_ldavis(ap_lda, AssociatedPress)
+data(TwentyNewsgroups, package = "LDAvis")
+json <- createJSON(phi = TwentyNewsgroups$phi,
+                   theta = TwentyNewsgroups$theta,
+                   doc.length = TwentyNewsgroups$doc.length,
+                   vocab = TwentyNewsgroups$vocab,
+                   term.frequency = TwentyNewsgroups$term.frequency)
+serVis(json)
+```
+
+##### Faces Example #######
+
+```{r, eval= FALSE}
+data(faces)
+
+olivetti_image = function(x) {
+  y = matrix(x, ncol = 64)
+  y = t(y[seq(64, 1, by = -1),])
+  image(y, col = gray((0:255)/256))
+}
+
+```
+
+1. Use KMeans clustering with different values of K and plot the "average" face for each cluster. How do the faces change when you use different values of K?
+
+```{r, eval= FALSE}
+km.out <- kmeans(faces,10)
+km.out
+
+# olivetti_image(faces$V1) #8
+# olivetti_image(faces$V32) #6
+# olivetti_image(faces$V63) #10
+# olivetti_image(faces$V343) #4
+# olivetti_image(faces$V714) #2
+# olivetti_image(faces$V995) #9
+
+# To get the average image, we needed to use centers. So we'd typically do something like 
+
+par(mfrow=c(2,5))
+for i in seq(1,10)) {
+  plot_digit(kmeans_res$centers[i,])
+}
+ 
+```

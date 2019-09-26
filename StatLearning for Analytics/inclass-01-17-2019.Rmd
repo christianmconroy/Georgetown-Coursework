@@ -1,0 +1,153 @@
+---
+title: 'Analytics 512: In-Class 1/17/19'
+output: html_document
+---
+
+
+### Statistical Learning - Notation
+ When modeling any data, we aim to understand the relationship between _input variables_ and _output variables_. There are many synonyms for both of these terms and we might use any of the following. Output variables might also be called _targets_ or _target variables_ and often denoted as _Y_. Input variables might be called _features_, _predictors_, _regressors_, _independent variables_, or just _variables_, and are often denoted as _X_. Through most of this course, Y will typically be one-dimension and X can be of any dimensionality. 
+
+Our goal is find some function _f_ that can capture this unknown relationship,
+$$
+\begin{aligned}
+Y = f(X) + \epsilon.
+\end{aligned}
+$$
+
+Here, we are already assuming that our function _f_ will be unable to capture *all* the variability in _Y_ and that some amount of _noise_ will be leftover, we call that $\epsilon$.
+
+After we have _fit_ a model to data, we'll have a single best estimate of _Y_ for any value of _X_, even for values of _X_ that don't occur in our observations. This _best estimate of Y_ is often denoted $\hat{Y}$, and using our estimating function we can refer to $\hat{f}$. Thus we can compare our predictions $\hat{Y}$ to the observed $Y$ and get an estimate of our _error_. There are many different metrics for error that we will encounter along the way.
+
+
+
+
+#### Exercise - Exploratory Data Analysis
+
+In this exercise, we'll review the basics of RMarkdown and conduct some exploratory data analyses with R. 
+
+First, make sure you have R and RStudio set up (you likely do from last semester) and install and import the R package that goes along with our text book. 
+```{r}
+# install.packages("ISLR")
+library(ISLR)
+```
+
+This package gives us access to many datasets that are used throughout the book. We can import any of these using `data(...)` command. Each group will be assigned a different dataset for this task (College, Hitters, Wage, Advertising,...). As a group, write an RMarkdown document that addresses the following questions.
+
+1. For you dataset, comment on the different features it contains. Some useful functions here include `head()`, `summary()`, `table()`, and so on.
+
+2. Conduct some simple visualizations such as histograms, scatterplots, and barplots. (Feel free to use base R or ggplot). Comment on any notable patterns you find. Do any of the features seem to have outliers? Do any of the features seem to be useless? 
+
+3. Examine the relationships between the features using a scatterplot matrix. You might do this for all the features at once, or for only a subset at a time. Do you notice any interesting relationships or trends? 
+
+
+### Statistical Learning - Basic Concepts
+
+From your pre-reading and watching of the ISLR videos, you should already have some familiarity with the following concepts. 
+  * Unsupervised vs Supervised problems
+  * Classification vs Regression
+  * Bias vs Variance tradeoff
+  * Accuracy vs Interpretability tradeoff
+  * Curse of Dimensionality
+  
+#### Unsupervised vs Supervised
+  * In your group, come up with 3 real-world examples of supervised problems and 3 of unsupervised problems. 
+
+#### Accuracy vs Intepretability
+ * What are some situations where accuracy is more valuable than interpretability?
+ * What are some situations where interpretability is more valuable than accuracy?
+  
+  
+#### Bias-Variance Tradeoff
+  * This concept is also known as "underfitting vs overfitting". We explore this concept in the accompanying Shiny app (https://keeganhines.shinyapps.io/bias_variance/).
+  
+#### Curse of Dimensionality
+Let's explore the curse of dimensionality. First, we'll a low dimensional problem, with 3 dimensions, and we'll draw a large sample of uniformly random numbers in those 3 dimensions.
+
+```{r}
+p <- 2 # pick dimension
+N <- 500 # pick sample size
+A <- matrix(runif(N*p), nrow = N, ncol = p)
+A[1:3,]
+```
+
+Every row in this matrix is a point in 2-dimensional space, which was uniformly drawn from a square.  The centroid point in this square is the coordinate (0.5, 0.5).
+
+```{r}
+plot(A[,1], A[,2], lty=4, asp=1 )
+rect(0,0,1,1, lwd=1)
+points(c(.5),c(.5), pch=2, col="firebrick")
+```
+
+Now let's find a radius `r` such that a fraction of all the points have a distance less than `r` away from the central point.
+
+```{r}
+center_point <- matrix(0.5, nrow = N, ncol = p)
+distances = sqrt(rowSums((center_point - A)^2))
+```
+
+Thus, 99% of all the points are within what distance from the center? (Think through what the max distance could be).
+```{r}
+quantile(distances, 0.99)
+```
+
+As we move in, toward the center, we could ask how far are the closest 1% of the points from the central point. 
+
+```{r}
+quantile(distances, 0.01)
+```
+
+This is a circle around the center, with radius 0.1. 
+```{r}
+plot(A[,1], A[,2], lty=4,  asp=1 )
+rect(0,0,1,1, lwd=1)
+points(c(.5),c(.5), pch=2, col="firebrick")
+closest = distances < 0.1
+points(A[closest,1], A[closest,2], lty=4, col='firebrick')
+```
+
+Let's flip this question around: What fraction of the points are within distance .5 from the center?
+
+```{r}
+sum((distances < .5)) / N
+```
+In two dimensions, about 70% of points are within .5 from the center point.
+
+*Exercise*: Repeat this question again but for higher dimensionality: in 3D, 5D, 10D, 20D. What fraction of points are within .5 from the center?
+
+You might ask the opposite question: as you increase dimensionality, how far to you have to go from the center to reach the nearest neighbor?  In higher dimensions, everything is more _spread out_ and some counter-intuitive things happen to geometry (https://www.youtube.com/watch?v=zwAD6dRSVyI). The point being, as we encounter higher-dimensional data, simple and intuitive approaches start to break down.
+
+
+#### Example - High Dimensionality
+
+The MNIST dataset is a famous benchmark in computer vision. It consists of low-resolution images of handwritten digits (from postal letters). I've prepared a subset of MNIST consisting of just images of "6" and of "8". This dataframe contains nearly twelve thousand images. 
+
+```{r}
+load("./mnist68.RData")
+dim(mnist68)
+
+head(mnist68$labels)
+```
+Each image is 28 pixels by 28 pixels. The scalar value of each pixel just refers to how light or dark each pixel is: a white pixel is a value of 0, a black pixel is a value of 1, and everything in between is some shade of gray. 
+
+In this dataframe, each row corresponds to a single image. The first 784 columns are the pixels and their corresponding values. The final column is the target label. Let's take a look at some examples.
+
+```{r}
+plot_digit <- function(j){
+  arr784 <- as.numeric(mnist68[j,1:784])
+  col=gray(12:1/12)
+  image(matrix(arr784, nrow=28)[,28:1], col=col, 
+        main = paste("this is a ",mnist68$labels[j]))
+}
+```
+
+```{r}
+plot_digit(9594)
+```
+
+
+```{r}
+plot_digit(9591)
+```
+
+
+This data is obviously quite high dimensional compared to some of the datasets we looked at in the ISLR package. But this high-dimensionality is more realistic for contemporary problems that involve images, audio, video, and natural language. 

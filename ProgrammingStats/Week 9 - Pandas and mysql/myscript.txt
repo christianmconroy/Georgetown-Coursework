@@ -1,0 +1,79 @@
+SHOW DATABASES;
+
+DROP DATABASE IF EXISTS classwork;
+
+CREATE DATABASE classwork;
+
+USE classwork;
+SHOW TABLES;
+
+CREATE TABLE Student (
+  stuId CHAR(6),
+  lastName CHAR(20) NOT NULL,
+  firstName CHAR(20) NOT NULL,
+  major CHAR(10),
+  credits SMALLINT DEFAULT 0,
+  CONSTRAINT Student_stuId_pk PRIMARY KEY (stuId),
+  CONSTRAINT Student_credits_cc CHECK ((CREDITS>=0) AND (credits < 150))
+);
+
+INSERT INTO Student  VALUES ("S1001", "Smith", "Tom", "History", 90);
+INSERT INTO Student  VALUES ("S1002", "Chin",  "Ann", "Math", 36);
+INSERT INTO Student  VALUES ("S1005", "Lee",  "Perry", "History", 3);
+INSERT INTO Student  VALUES ("S1010", "Burns", "Edward", "Art", 63);
+INSERT INTO Student  VALUES ("S1013", "McCarthy", "Owen", " Math", 0);
+INSERT INTO Student  VALUES ("S1015", "Jones",  "Mary", "Math", 42);
+INSERT INTO Student  VALUES ("S1020", "Rivera",  "Jane", "CSC", 15);
+
+
+CREATE TABLE Faculty (
+  facId CHAR(6),
+  name CHAR(20) NOT NULL,
+  department CHAR(20) NOT NULL,
+  rank CHAR(10),
+  CONSTRAINT Faculty_facId_pk PRIMARY KEY (facId)
+);
+
+INSERT INTO Faculty VALUES ("F101", "Adams", "Art", "Professor");
+INSERT INTO Faculty VALUES ("F105", "Tanaka", "CSC", "Instructor");
+INSERT INTO Faculty VALUES ("F110", "Byrne", "Math", "Assistant");
+INSERT INTO Faculty VALUES ("F115", "Smith", "History", "Associate");
+INSERT INTO Faculty VALUES ("F221", "Smith", "CSC", "Professor");
+
+
+
+CREATE TABLE Class (
+  classNumber CHAR(8),
+  facId CHAR(6) NOT NULL,
+  schedule CHAR(8),
+  room CHAR(6),
+  CONSTRAINT Class_classNumber_pk PRIMARY KEY (classNumber),
+  CONSTRAINT Class_facId_fk FOREIGN KEY (facId) REFERENCES Faculty (facId) ON DELETE NO ACTION
+);
+
+INSERT INTO Class VALUES ("ART103A", "F101", "MWF9", "H221");
+INSERT INTO Class VALUES ("CSC201A", "F105", "TuThF10", "M110");
+INSERT INTO Class VALUES ("CSC203A", "F105", "MThF12", "M110");
+INSERT INTO Class VALUES ("HST205A" ,"F115", "MWF11", "H221");
+INSERT INTO Class VALUES ("MTH101B", "F110", "MTuTh9", "H225");
+INSERT INTO Class VALUES ("MTH103C", "F110", "MWF11", "H225");
+
+CREATE TABLE Enroll (
+  classNumber CHAR(8),
+  stuId CHAR(6),
+  grade CHAR(2),
+  CONSTRAINT Enroll_classNumber_stuId_pk PRIMARY KEY (classNumber, stuId),
+  CONSTRAINT Enroll_classNumber_fk FOREIGN KEY (classNumber) REFERENCES Class (classNumber) ON DELETE NO ACTION,
+  CONSTRAINT Enroll_stuId_fk FOREIGN KEY (stuId) REFERENCES Student (stuId) ON DELETE CASCADE
+);
+
+INSERT INTO Enroll VALUES ("ART103A", "S1001", "A");
+INSERT INTO Enroll VALUES ("HST205A", "S1001", "C");
+INSERT INTO Enroll VALUES ("ART103A", "S1002", "D");
+INSERT INTO Enroll VALUES ("CSC201A", "S1002", "F");
+INSERT INTO Enroll VALUES ("MTH103C", "S1002", "B");
+INSERT INTO Enroll VALUES ("ART103A", "S1010", NULL);
+INSERT INTO Enroll VALUES ("MTH103C", "S1010", NULL);
+INSERT INTO Enroll VALUES ("CSC201A", "S1020", "B");
+INSERT INTO Enroll VALUES ("MTH101B", "S1020", "A");
+

@@ -1,0 +1,262 @@
+---
+title: "InClass 04/03/2019"
+output: html_document
+---
+
+```{r}
+# install.packages('tree')
+require("tree")
+require("gbm")
+require("randomForest")
+require("ISLR")
+```
+
+
+#Decision Trees
+
+## Exercise
+
+We're going to implement our own decision tree. 
+
+a) _Warm up_. Write a function called rss() that takes in a vector and returns the residual sum of squares (relative to the mean of the vector).
+
+```{r}
+
+rss <- function(y) {
+  sum((y - mean(y))^2)
+}
+
+```
+
+b) _Best Split_. We're next going to write a function best_split() that will form the basis of a decision tree. This function will take in two arguments corresponding to a single predictor variable (ie, x) and a single target variable (ie, y). This function will identify the single location in the x domain that would yield the best split of the data, such that the two halves now each have least total RSS. 
+
+```{r}
+bestsplit = function(x,y){
+   indices = 1:length(x)
+   rss0 = rss(y)
+   # Keep track of how the RSS decreases for every place that I put the piecewise star
+   rss_changes = double(length(x) - 1)
+   for (j in 1:length(x)-1){
+     indexj = indices < j+1
+     # Base model minus RSS of the left half plus the RSS of the right half 
+     # rss0 is what I start with
+     rss_changes[j] = rss0 - (rss(y[indexj]) + rss (y[!indexj]))
+     }
+   j_best = which.max(rss_changes)
+   # This will give me where the best is
+   
+   # Where is best place to make the split in x. given that split, what is my y hat for the lower half and what is my y hat for the upper half. And what's the change in RSS by doing that split. 
+   return(list(xsplit = (x[j_best+1] + x[j_best])/2, 
+               ylower = mean(y[1 : j_best+1]), 
+               yupper = mean(y[j_best:length(y)]),
+               deltarss = rss_changes[j_best])
+          )
+}
+```
+
+Some things to think about:
+ (i) If your input x vector has *n* data points, how many possible split locations are there? 
+ (ii) You can accomplish this task by brute force. For every possible split location, split the data into two parts and compute the new total RSS. Then just return whichever split location was the optimal one. 
+ 
+Make sure your function returns a few things (perhaps in a list): the location of the x split, the mean of y for each of the split parts, the improvement in RSS that was acheived by the split. 
+
+c) _One Dimensional Data_ Here is a synthetic data set with one predictor and one response. Use your function to find out where the first split would be if $y$ is predicted from $x$ with a regression tree.
+
+```{r}
+x = seq(0,10,by = .01)
+y0 = cos(x/4 + x^2/5)*x^2/20 + x 
+y = y0 + rnorm(length(x))
+mydf = data.frame(x=x,y=y)
+rss0 = 1000*var(y)
+plot(x,y)
+split0 <- bestsplit(x,y) 
+split0
+```
+
+What is the total RSS of y? What this RSS reduced to when you split the data? 
+
+d) _Growing the Tree_ 
+
+Split the lower half again. Split the upper half again. What is the total RSS now?
+```{r}
+index <- x < split0$xsplit
+x1 <- x[index]
+y1 <- y[index]
+split1 = bestsplit(x1,y1)
+split1
+```
+
+```{r}
+index <- x > split1$xsplit
+x2 = x[index]
+y2 <- y[index]
+split2 = bestsplit(x2,y2)
+split2
+```
+
+_Now With R_
+Now let's make a tree using the R function. 
+
+```{r,fig.width=5}
+mytree = tree(y ~x, data = mydf)
+names(mytree)
+plot(mytree)
+text(mytree,pretty = 2)
+```
+
+
+You can see that the first few splits are exactly where they were found by the step-by-step computation. 
+Make a plot of the data and a plot of the step function that is obtained from the tree.
+```{r,fig.width=5}
+plot(x,mytree$y, type= 'p', lwd = 2,pch = 46)
+# Remember that we have to specify type = vector with decision trees!
+y.pred=predict(mytree,mydf,type= "vector")
+points(x,y.pred, col = "red",pch = 46)
+```
+
+### Question
+Now that we have a good understanding of how to do rescursive binary splitting of a single variable, how do we handle multiple predictors? 
+
+_Work with Abalone Data_. These data may be found on the [UC Irvine website](http://archive.ics.uci.edu/ml/). They give various physical characteristics of about 4000 abalone shellfish. The data were collected in Tasmania in 1995. Make sure that the data are in your source directory.
+```{r}
+load("abalone.RData")
+head(abalone)
+```
+
+a) We'll try to predict the number of Rings, using the other features. Train a linear model as a baseline case.
+```{r}
+lm1 <- lm(Rings ~., data=abalone)
+summary(lm1)
+```
+
+b) Now build a tree and plot it.  We can make the annotation of the tree look better by reducing the font size with the \texttt{cex} parameter. What is the depth of the tree? How many leaves does it have?
+```{r}
+abalone_tree = tree(Rings~., data=abalone)
+plot(abalone_tree)
+text(abalone_tree, cex=.65)
+```
+
+c) We can manually prune the tree to whatever depth we want. Use the function prune.tree() to simplify the tree so it only has 4 leaves. Visualize this tree.
+```{r}
+# I think it's up to us in terms of what best should be 
+pruned_tree <- prune.tree(abalone_tree, best=4)
+plot(pruned_tree)
+text(pruned_tree, cex=.65)
+```
+
+d) Which two continuous predictors seem to be highly predictive according to the tree? Draw a sketch of the feature space and the splits in the space, as well as the predicted number of Rings for each region.
+
+```{r,fig.width=5}
+plot(x,mytree$y, type= 'p', lwd = 2,pch = 46)
+y.pred=predict(mytree,mydf,type= "vector")
+points(x,y.pred, col = "red",pch = 46)
+```
+
+According to the tree, Shellweight seems to be highly predictive.
+
+e) Decision trees have high variance. Split the Abalone data in half and train two trees (and don't worry about any extra pruning). Observe the differences between them, visualize the two different trees.
+
+```{r message = FALSE}
+# Split the data in half
+set.seed(12345)
+datasplit <- sample(nrow(abalone),(nrow(abalone) * .50), replace = FALSE)
+
+abalone_1 <- abalone[datasplit,]
+abalone_2 <- abalone[-datasplit,]
+
+abalone_tree1 = tree(Rings~., data=abalone_1)
+plot(abalone_tree1)
+text(abalone_tree1, cex=.65)
+
+abalone_tree2 = tree(Rings~., data=abalone_2)
+plot(abalone_tree2)
+text(abalone_tree2, cex=.65)
+
+# The first few features selected as the most important features remain the same.
+# Locations of split are different due to the random sampling - Not a big difference early in the tree
+# As you get down the tree, some of the features end up being pretty different. (Viscera in one for example)
+  # Pruning would be a solution here so that they end up less overfit. 
+
+```
+
+# Ensemble Methods
+
+### Question
+What are the downsides of Decision Trees? There are three Ensembling techniques that we can use: Bagging, Random Forest, and Boosting. What are the conceptual differences between these?
+
+
+## Exercise 
+Let's explore the airfoil data. We're going to try to predict the "Pressure" feature from the other features. Use one of the tree aggregation methods we have learned about (Random Forest, Boosting, Bagging)
+
+```{r}
+load("airfoil.RData")
+head(airfoil)
+```
+
+a) We'll try to predict the number of Rings, using the other features. Train a linear model as a baseline case.
+```{r}
+lm1 <- lm(Pressure ~., data=airfoil)
+summary(lm1)
+```
+
+(a) Start with some exploratory visualizations to see how the other features are related to Pressure. Feel free to use pairs(), or scatterplots, or boxplots. Do any features seem to be strongly predictive of Pressure?
+
+```{r}
+# Plot
+plot(airfoil$Displacement, airfoil$Pressure)
+plot(airfoil$Frequency, airfoil$Pressure)
+plot(airfoil$AngleOfAttack, airfoil$Pressure)
+plot(airfoil$ChordLength, airfoil$Pressure)
+plot(airfoil$FreeStreamVelocity, airfoil$Pressure)
+
+cor(airfoil)
+```
+
+(b) Create a train-test split of the data.
+
+```{r}
+
+# Split into train and test
+set.seed(12345)
+train <- sample(nrow(airfoil),(nrow(airfoil) * .70), replace = FALSE)
+
+airfoil_train <- airfoil[train,]
+airfoil_test <- airfoil[-train,]
+
+```
+
+
+(c) Fit a linear model, observe the $R^2$ on the test set.
+
+
+```{r}
+lm1 <- lm(Pressure ~., data=airfoil_train)
+summary(lm1)
+```
+
+# r2 was 0.51
+
+(d) Fit a single decision tree, one with large depth. Observe the $R^2$ on the test set. Make a plot of three if you wish.
+
+```{r}
+# Random Forest
+
+```
+
+
+(e) Fit a tree agreegation model, observe the $R^2$ on the test set.
+
+```{r}
+# train GBM model
+boost.airfoil  <- gbm(Pressure ~., data= airfoil_train, n.trees=5000, interaction.depth=4)
+summary(boost.airfoil)
+
+# Shrinkage rate - 0.1 (How much do you emphasize the wrongs)
+  # If you can converge to a lower total error, it'll be worth maybe going to a smaller shrinkage
+
+plot(boost.airfoil)
+
+yhat.boost <- predict(boost.airfoil ,newdata = airfoil_test,n.trees=5000)
+Test_RSq <- (cor(yhat.boost, airfoil_test$Pressure))^2
+Test_RSq
+```

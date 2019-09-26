@@ -1,0 +1,177 @@
+---
+title: "inClass-02-27-2019"
+output: html_document
+---
+
+```{r}
+library(MASS)
+library(ISLR)
+library(boot)
+```
+
+# questions
+
+### what is the difference between validation set approach and cross validation?
+
+### what is the difference between cross validation and LOOCV?
+
+### Advantages of LOOCV over ordinary cross validation?
+
+### Advantages of ordinary cross validation over LOOCV?
+
+### What is the reason for the low bias of LOOCV? 
+
+### What is the reason for the high variability of LOOCV?
+
+### How would you implement a K-Fold Cross Validation function from scratch?
+
+
+
+### Consider an ordinary quantitative regression problem
+##### estimate residual error from formula
+```{r}
+fit.1 = lm(Sales ~ ., data = Carseats)
+summary(fit.1)
+
+# lets omit some of these categorical features
+fit.2 = lm(Sales ~ . - Population - Education - Urban - US, data = Carseats)
+summary(fit.2)
+```
+
+##### estimate residual error from training set/test set that we split manually.
+
+```{r}
+train = sample(400,200,replace = F)
+
+fit.3 = lm(Sales ~ . - Population - Education - Urban - US, data = Carseats[train,])
+
+summary(fit.3)
+
+# Make predictions on the test dataset here 
+Sales.predicted = predict(fit.3, newdata = Carseats[-train,])
+
+# Calculate the mean squared error (this is your accuracy prediction. Don't forget this!)
+sqrt(mean((Sales.predicted - Carseats$Sales[-train])^2))
+```
+
+#### Estimate the residual error from K-fold cross validation with R's cv.glm() function
+
+```{r}
+fit.1.glm = glm(Sales ~ . - Population - Education - Urban - US, data = Carseats)
+```
+
+##### from 5-fold cross validation
+```{r}
+fit.cv5 <- cv.glm(Carseats, fit.1.glm, K = 5)
+
+# Delta is the calculation of residual error 
+fit.cv5$delta
+```
+
+##### LOOCV is simply K-fold CV where K=N
+
+```{r}
+
+fit.loocv <- cv.glm(Carseats, fit.1.glm)
+fit.loocv$delta
+```
+
+
+
+### Examine the variability of estimated residuals for k-fold approach vs validation set approach
+residuals_df = data.frame()
+
+## Validation set
+```{r}
+residuals <- c()
+for (i in 1:30){
+  train = sample(400,200,replace = F)
+  
+  fit.3 = lm(Sales ~ . - Population - Education - Urban - US, data = Carseats[train,])
+  
+  summary(fit.3)
+  
+  Sales.predicted = predict(fit.3, newdata = Carseats[-train,])
+  
+  residuals <- c(residuals, sqrt(mean((Sales.predicted - Carseats$Sales[-train])^2)))
+  
+}
+boxplot(residuals)
+residuals_df = data.frame("traintest" = residuals)
+```
+
+
+
+## k-fold
+```{r}
+residuals <- c()
+for (i in 1:30){
+  fit.cv10 <- cv.glm(Carseats, fit.1.glm, K = 10)
+  residuals <- c(residuals, fit.cv10$delta[1])
+}
+boxplot(residuals)
+residuals_df["kfold"] = residuals
+boxplot(residuals_df)
+```
+
+As you can see above, we have a much smaller variance on the test error for k-fold than we did with the train test. 
+
+### Use these methods to decide between two different models (linear or quadratic)
+ * How would this be done? 
+ * Decide between several different models using CV
+
+
+
+#### Make synthetic data
+```{r}
+mydf = data.frame(x = runif(100,min = -10, max = 10))
+mydf$y = sin(mydf$x) + .1*mydf$x^2 + rnorm(100)
+plot(y ~ x, data = mydf)
+```
+
+#### Make a linear model and assess it with 10-fold CV.
+```{r}
+fit.x.1 <- glm(y ~ x, data = mydf)
+fit.x.1.cv <- cv.glm(mydf, fit.x.1,K = 10)
+fit.x.1.cv$delta
+
+fit.x.2 <- glm(y ~ poly(x,2), data = mydf)
+fit.x.2.cv <- cv.glm(mydf, fit.x.2,K = 10)
+fit.x.2.cv$delta
+```
+
+# Exercise: 
+Now do this for polynomial models up to order 10 and examine the error.
+  
+### Consider a classification problem
+
+### Cross validation for mnist data 
+```{r}
+load("./mnist68.RData")
+mnist68$target <- mnist68$labels == 8
+```
+
+####  We shall use features  X463, X513, and maybe X753
+```{r, eval=FALSE}
+fit.2 <- glm(target ~ V463 + V513, data = mnist68, family = binomial)
+pred.2 = predict(fit.2, mnist68, type = "response")
+
+table(mnist68$target, pred.2 > .5)
+
+fit.2cv5 <- cv.glm(mnist68, fit.2, K = 5)
+
+names(fit.2cv5)
+
+fit.2cv5$delta
+
+#fit.2cv10 <- cv.glm(mnist68, fit.2, K = 10)
+
+#fit.2cv10$delta
+
+#fit.2loocv <- cv.glm(mnist68, fit.2)
+
+#fit.2loocv$delta
+```
+
+# Exercise:
+Use CrossValidation to perform "Feature Selection". Try the model with one, two, or all three pixel features and calculate the 5-Fold CV Error for each model. 
