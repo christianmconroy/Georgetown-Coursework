@@ -32,13 +32,13 @@ Let’s use the lubridate package to convert the string timestamps to date-time 
 library(rtweet)
 
 # whatever name you assigned to your created app
-appname <- "TwittRes"
+appname <- #
 
 ## api key (example below is not a real key)
-key <- "ipoxl0A3jjj52V2n3mygKZ9QB"
+key <- #
 
 ## api secret (example below is not a real key)
-secret <- "KGoFMFkJJT7g3OhWjN7eMR7QRAI762zMQF0wz6wTANODuJYMBc"
+secret <- #
 
 twitter_token <- create_token(
   app = appname,
