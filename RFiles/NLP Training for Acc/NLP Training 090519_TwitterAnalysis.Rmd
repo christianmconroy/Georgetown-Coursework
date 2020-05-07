@@ -132,13 +132,13 @@ Authentication
 
 ```{r message = FALSE, warning= FALSE}
 
-consumer_key <- "ipoxl0A3jjj52V2n3mygKZ9QB"
+consumer_key <- #
  
-consumer_secret <- "KGoFMFkJJT7g3OhWjN7eMR7QRAI762zMQF0wz6wTANODuJYMBc"
+consumer_secret <-  #
  
-access_token <- "216776122-qN5VDYAyVHAbPiEOPFCukcQkEExCtYYzxL6EoSxq"
+access_token <- #
  
-access_secret <- "xcabtFzdrvJm4K1hJlbGhvltiUkg0sQiUE8aDnAEsU9qK"
+access_secret <- #
 
 setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 
@@ -381,13 +381,13 @@ library(igraph)
 ```
 
 ```{r message = FALSE, warning= FALSE}
-consumer_key <- "ipoxl0A3jjj52V2n3mygKZ9QB"
+consumer_key <- #
  
-consumer_secret <- "KGoFMFkJJT7g3OhWjN7eMR7QRAI762zMQF0wz6wTANODuJYMBc"
+consumer_secret <- #
  
-access_token <- "216776122-qN5VDYAyVHAbPiEOPFCukcQkEExCtYYzxL6EoSxq"
+access_token <- #
  
-access_secret <- "xcabtFzdrvJm4K1hJlbGhvltiUkg0sQiUE8aDnAEsU9qK"
+access_secret <- #
 
 setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 ```
@@ -913,13 +913,13 @@ Authentication
 ```{r message = FALSE, warning= FALSE}
 library(twitteR)
 
-consumer_key <- "ipoxl0A3jjj52V2n3mygKZ9QB"
+consumer_key <- #
  
-consumer_secret <- "KGoFMFkJJT7g3OhWjN7eMR7QRAI762zMQF0wz6wTANODuJYMBc"
+consumer_secret <- #
  
-access_token <- "216776122-qN5VDYAyVHAbPiEOPFCukcQkEExCtYYzxL6EoSxq"
+access_token <- #
  
-access_secret <- "xcabtFzdrvJm4K1hJlbGhvltiUkg0sQiUE8aDnAEsU9qK"
+access_secret <- #
 
 setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 
